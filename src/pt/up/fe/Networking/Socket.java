@@ -2,18 +2,22 @@ package pt.up.fe.Networking;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
 
 /**
- *      Socket (from Lab 01)
+ *      Multicast Socket
  */
 
 public class Socket {
-    DatagramSocket socket;
+    MulticastSocket socket;
+    InetAddress multicastGroup;
 
-    public Socket(int port) throws IOException {
-        socket = new DatagramSocket(port);
+    public Socket(String socketAddress, int port) throws IOException {
+        socket = new java.net.MulticastSocket(port);
+        multicastGroup = InetAddress.getByName(socketAddress);
+
+        socket.joinGroup(multicastGroup);
     }
 
     public DatagramPacket receive(int packetLength) {
@@ -43,6 +47,12 @@ public class Socket {
     }
 
     public void close() {
+        try {
+            socket.leaveGroup(multicastGroup);
+        } catch (IOException exc) {
+            System.out.println("An error has occurred while leaving the multicast group. Closing the socket anyway...");
+        }
+
         socket.close();
     }
 }
