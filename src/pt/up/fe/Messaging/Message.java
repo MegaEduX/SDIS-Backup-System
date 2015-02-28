@@ -6,5 +6,5 @@ import java.net.InetAddress;
  * Created by MegaEduX on 27/02/15.
  */
 public class Message {
-    InetAddress source;
+    InetAddress source;     //  This may not be used after all.
 }

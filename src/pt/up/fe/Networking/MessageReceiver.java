@@ -5,5 +5,13 @@ package pt.up.fe.Networking;
  */
 
 public class MessageReceiver {
+    ProtocolController pc;
 
+    MessageReceiver(ProtocolController controller) {
+        pc = controller;
+    }
+
+    void start() {
+
+    }
 }
