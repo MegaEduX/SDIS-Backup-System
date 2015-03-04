@@ -2,10 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e9933a6e-7e32-49fc-a653-40ec8e90eec0" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/pt/up/fe/Networking/UDPMulticast.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/pt/up/fe/Networking/UDPUnicast.java" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/pt/up/fe/Networking/Socket.java" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/pt/up/fe/Networking/ProtocolController.java" afterPath="$PROJECT_DIR$/src/pt/up/fe/Networking/ProtocolController.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="SDIS Proj1.iws" />
@@ -47,7 +43,7 @@
       <file leaf-file-name="ProtocolController.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/pt/up/fe/Networking/ProtocolController.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.77720207" vertical-offset="0" max-vertical-offset="579">
+            <state vertical-scroll-proportion="0.779896" vertical-offset="0" max-vertical-offset="577">
               <caret line="34" column="1" selection-start-line="34" selection-start-column="1" selection-end-line="34" selection-end-column="1" />
               <folding>
                 <element signature="e#738#739#0" expanded="true" />
@@ -607,7 +603,7 @@
       <workItem from="1425155632338" duration="907000" />
       <workItem from="1425293896346" duration="160000" />
       <workItem from="1425329158506" duration="130000" />
-      <workItem from="1425471417576" duration="585000" />
+      <workItem from="1425471417576" duration="613000" />
     </task>
     <task id="LOCAL-00001" summary="Added UDP Socket code from Lab 01.">
       <created>1425086256306</created>
@@ -639,15 +635,21 @@
       <option name="project" value="LOCAL" />
       <updated>1425156568691</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Modified Unicast/Multicast classes.">
+      <created>1425472020603</created>
+      <option name="number" value="00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1425472020603</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="5384000" />
+    <option name="totallyTimeSpent" value="5412000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1366" height="697" extended-state="6" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -663,6 +665,7 @@
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32962668" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294893" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3299293" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -674,7 +677,6 @@
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3299293" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3299293" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
@@ -726,7 +728,8 @@
     <MESSAGE value="More improvements on the base." />
     <MESSAGE value="More stubs." />
     <MESSAGE value="A bit of work, not much tho." />
-    <option name="LAST_COMMIT_MESSAGE" value="A bit of work, not much tho." />
+    <MESSAGE value="Modified Unicast/Multicast classes." />
+    <option name="LAST_COMMIT_MESSAGE" value="Modified Unicast/Multicast classes." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -1150,7 +1153,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/pt/up/fe/Networking/ProtocolController.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.77720207" vertical-offset="0" max-vertical-offset="579">
+        <state vertical-scroll-proportion="0.779896" vertical-offset="0" max-vertical-offset="577">
           <caret line="34" column="1" selection-start-line="34" selection-start-column="1" selection-end-line="34" selection-end-column="1" />
           <folding>
             <element signature="e#738#739#0" expanded="true" />
