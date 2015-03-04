@@ -7,23 +7,23 @@ import java.io.IOException;
  */
 
 public class ProtocolController {
-    Socket MCSocket, MDBSocket, MDRSocket;
+    UDPUnicast MCSocket, MDBSocket, MDRSocket;
 
     ProtocolController(String MCAddress, int MCPort, String MDBAddress, int MDBPort, String MDRAddress, int MDRPort) throws IOException {
-        MCSocket = new Socket(MCAddress, MCPort);
-        MDBSocket = new Socket(MDBAddress, MDBPort);
-        MDRSocket = new Socket(MDRAddress, MDRPort);
+        MCSocket = new UDPMulticast(MCAddress, MCPort);
+        MDBSocket = new UDPUnicast(MDBAddress, MDBPort);
+        MDRSocket = new UDPUnicast(MDRAddress, MDRPort);
     }
 
-    Socket getMCSocket() {
+    UDPUnicast getMCSocket() {
         return MCSocket;
     }
 
-    Socket getMDBSocket() {
+    UDPUnicast getMDBSocket() {
         return MDBSocket;
     }
 
-    Socket getMDRSocket() {
+    UDPUnicast getMDRSocket() {
         return MDRSocket;
     }
 
