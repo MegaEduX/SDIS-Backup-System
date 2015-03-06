@@ -1,5 +1,6 @@
 package pt.up.fe.Filesystem;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +38,25 @@ public class BackedUpFile extends File {
             return digest.digest(idBeforeSHA.getBytes("UTF-8"));
         } catch (Exception e) {
 
+        }
+
+        return null;
+    }
+
+    //  Borrowed some code from http://stackoverflow.com/questions/9588348/java-read-file-by-chunks
+
+    byte[] getChunk(int chunkId) throws IOException {
+        byte[] buffer = new byte[kChunkLengthInBytes];
+        FileInputStream in = new FileInputStream(_path);
+
+        while (in.read(buffer) != -1) {
+            if (chunkId > 0) {
+                chunkId--;
+
+                continue;
+            }
+
+            return buffer;
         }
 
         return null;
