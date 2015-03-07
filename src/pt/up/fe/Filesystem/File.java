@@ -8,6 +8,14 @@ public class File {
 
     //  Borrowed from http://www.java2s.com/Code/Java/File-Input-Output/GetFileSizeInMB.htm
 
+    public String getId() {
+        return _id;
+    }
+
+    public int getNumberOfChunks() {
+        return _numberOfChunks;
+    }
+
     public static long getFileSizeInBytes(String fileName) {
         long ret = 0;
 

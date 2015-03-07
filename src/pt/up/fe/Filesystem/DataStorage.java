@@ -15,8 +15,12 @@ public class DataStorage {
 
     private String _dataStorePath;
 
-    DataStorage(String path) throws IOException {
+    public DataStorage(String path) throws IOException {
         _dataStorePath = path;
+    }
+
+    public String getDataStorePath() {
+        return _dataStorePath;
     }
 
     //  Borrowed from http://stackoverflow.com/questions/711993/does-java-have-a-path-joining-method
@@ -32,7 +36,7 @@ public class DataStorage {
         return fileId + "-" + chunkId;
     }
 
-    Vector<String> chunkList() {
+    public Vector<String> chunkList() {
         java.io.File currentDir = new java.io.File(_dataStorePath);
 
         java.io.File[] fileList = currentDir.listFiles();

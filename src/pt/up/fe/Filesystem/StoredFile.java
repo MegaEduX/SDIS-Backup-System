@@ -7,11 +7,10 @@ import java.util.Vector;
  */
 
 public class StoredFile extends File {
-    String _owner;
-    Vector<String> _chunksStored;
+    Vector<Integer> _chunksStored;
 
-    StoredFile(String fileOwner, Vector<String> fileChunksStored) {
-        _owner = fileOwner;
+    public StoredFile(String identifier, Vector<Integer> fileChunksStored) {
+        _id = identifier;
         _chunksStored = fileChunksStored;
         _numberOfChunks = _chunksStored.size();
     }
