@@ -5,13 +5,13 @@ import pt.up.fe.Filesystem.File;
 import java.util.Vector;
 
 public class Database {
-    Vector<File> files;
+    //  Vector<File> _files;
 
     /*
      *      This function should be overridden by a subclass.
      */
 
-    boolean load() {
-        return false;
+    void load() {
+
     }
 }
