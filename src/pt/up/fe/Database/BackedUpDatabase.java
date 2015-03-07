@@ -12,7 +12,7 @@ public class BackedUpDatabase {
     Vector<BackedUpFile> _files;
 
     public BackedUpDatabase() {
-        
+
     }
 
 
