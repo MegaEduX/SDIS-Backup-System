@@ -12,15 +12,31 @@ import java.util.Vector;
  */
 
 public class DataStorage {
+    private static final DataStorage Instance = new DataStorage();
+
+    private DataStorage() {
+        if (Instance != null) {
+            throw new IllegalStateException("Already instantiated!");
+        }
+    }
+
+    public static DataStorage getInstance() {
+        return Instance;
+    }
 
     private String _dataStorePath;
 
-    public DataStorage(String path) throws IOException {
-        _dataStorePath = path;
+    private void _consistencyCheck() {
+        if (_dataStorePath != null)
+            throw new IllegalStateException("Data Store wasn't instantiated!");
     }
 
     public String getDataStorePath() {
         return _dataStorePath;
+    }
+
+    public void setDatStorePath(String path) {
+        _dataStorePath = path;
     }
 
     //  Borrowed from http://stackoverflow.com/questions/711993/does-java-have-a-path-joining-method
@@ -37,6 +53,8 @@ public class DataStorage {
     }
 
     public Vector<String> chunkList() {
+        _consistencyCheck();
+
         java.io.File currentDir = new java.io.File(_dataStorePath);
 
         java.io.File[] fileList = currentDir.listFiles();
@@ -49,13 +67,17 @@ public class DataStorage {
         return chunks;
     }
 
-    boolean chunkExists(String fileId, int chunkId) {
+    public boolean chunkExists(String fileId, int chunkId) {
+        _consistencyCheck();
+
         java.io.File f = new java.io.File(chunkFileName(fileId, chunkId));
 
         return f.exists();
     }
 
-    boolean storeChunk(String fileId, int chunkId, byte[] data) {
+    public boolean storeChunk(String fileId, int chunkId, byte[] data) {
+        _consistencyCheck();
+
         try {
             FileOutputStream fos = new FileOutputStream(chunkFileName(fileId, chunkId));
 
@@ -70,7 +92,9 @@ public class DataStorage {
         return false;
     }
 
-    byte[] retrieveChunk(String fileId, int chunkId) throws IOException {
+    public byte[] retrieveChunk(String fileId, int chunkId) throws IOException {
+        _consistencyCheck();
+
         String pathToChunk = appendPaths(_dataStorePath, chunkFileName(fileId, chunkId));
 
         Path path = Paths.get(pathToChunk);

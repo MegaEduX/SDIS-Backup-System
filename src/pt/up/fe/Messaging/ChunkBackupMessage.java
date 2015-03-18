@@ -12,4 +12,11 @@ public class ChunkBackupMessage extends Message {
 
         return concatByteArrays(dataHeader, data);
     }
+
+    String confirmMessage(String version, String fileId, int chunkNo) {
+        return "STORED " + version + " " + fileId + " " + Integer.toString(chunkNo) + " ";
+    }
+
+
+
 }
