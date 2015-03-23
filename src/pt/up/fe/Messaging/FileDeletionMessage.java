@@ -10,6 +10,7 @@ public class FileDeletionMessage extends Message {
 
         byte[] dataHeader = header.getBytes();
 
-        return concatByteArrays(dataHeader, data);
+        this.msg = concatByteArrays(dataHeader, data);
+        return this.msg;
     }
 }

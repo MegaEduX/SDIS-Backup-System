@@ -4,6 +4,11 @@ import java.net.InetAddress;
 
 public class Message {
     InetAddress source;     //  This may not be used after all.
+    //Message Header
+    String header;
+
+
+    byte [] msg;
 
     /*
      *      Utility function taken from http://stackoverflow.com/questions/5513152/easy-way-to-concatenate-two-byte-arrays
@@ -39,4 +44,9 @@ public class Message {
          *      This doesn't return void of course, it's just a stub for now... Neither has string as input arguments.
          */
     }
+
+    public String getHeader() {
+        return this.header;
+    }
+
 }

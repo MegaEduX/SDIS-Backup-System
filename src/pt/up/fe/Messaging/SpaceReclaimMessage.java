@@ -6,6 +6,7 @@ public class SpaceReclaimMessage extends Message {
     }
 
     byte[] makeMessage(String header, byte[] data) {
+        this.header = header;
         header += "\r\n\r\n";   //  Append two <CR><LF>
 
         byte[] dataHeader = header.getBytes();
