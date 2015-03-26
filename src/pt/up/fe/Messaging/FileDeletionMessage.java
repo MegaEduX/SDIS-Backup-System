@@ -1,16 +1,11 @@
 package pt.up.fe.Messaging;
 
 public class FileDeletionMessage extends Message {
-    String makeHeader(String version, String fileId) {
-        return "GETCHUNK " + version + " " + fileId + " ";
-    }
+    public FileDeletionMessage(String version, String fileId, byte[] data) {
+        header = "DELETE " + version + " " + fileId + " ";
 
-    byte[] makeMessage(String header, byte[] data) {
         header += "\r\n\r\n";   //  Append two <CR><LF>
 
-        byte[] dataHeader = header.getBytes();
-
-        this.msg = concatByteArrays(dataHeader, data);
-        return this.msg;
+        messageData = header.getBytes();    //  DELETE doesn't have a body.
     }
 }

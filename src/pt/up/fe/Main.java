@@ -1,24 +1,146 @@
 package pt.up.fe;
 
 import pt.up.fe.Filesystem.*;
+import pt.up.fe.Messaging.ChunkBackupMessage;
+import pt.up.fe.Networking.MessageReceiver;
+import pt.up.fe.Networking.MessageSender;
+import pt.up.fe.Networking.ProtocolController;
+import pt.up.fe.Networking.UDPMulticast;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.util.Scanner;
 
 public class Main {
 
+    public static String kAppVersion = "1.0";
+    public static int kReplicationDeg = 5;
+    public static int kMaxTriesPerChunk = 5;
+
     public static void main(String[] args) {
-        //  Some test code...
-
         try {
-            DataStorage ds = new DataStorage("/Users/MegaEduX/DataStorage/");
 
-            BackedUpFile f = new BackedUpFile("/Users/MegaEduX/Dudu/Tempo.java");
+            /*
 
-            byte[] fileId = f.generateFileId();
+                So, if I understood this correctly.
+                Chunk Backup -> PUTCHUNK sent on the MDB, STORED sent on the MC.
+                Chunk Restore -> GETCHUNK sent on the MC, CHUNK sent on the MDR.
+                Chunk Delete -> DELETE sent on the MC.
+                Chunk Removed -> REMOVED sent on the MC.
 
-            System.out.println("File Id: " + new String(fileId));
+             */
 
-            System.out.println("Chunk 1: " + new String(f.getChunk(0)));
+            DataStorage ds = DataStorage.getInstance();
+
+            ds.setDataStorePath("/Users/MegaEduX/DataStorage/");
+
+            final ProtocolController pc = new ProtocolController(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]), args[4], Integer.parseInt(args[5]));
+
+            final MessageReceiver rec = new MessageReceiver(pc);
+            final MessageSender snd = new MessageSender(pc);
+
+            /*
+
+                MC Thread
+
+             */
+
+            Thread controlChannelThread = new Thread("MC Thread") {
+                public void run() {
+                    UDPMulticast mcSocket = pc.getMCSocket();
+
+                    while (true) {
+                        DatagramPacket packet = mcSocket.receive();
+
+                        String outStr = new String(packet.getData(), 0, packet.getLength());
+
+                        try {
+                            rec.parseMessage(outStr);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            };
+
+            controlChannelThread.start();
+
+            /*
+
+                MDB Thread
+
+             */
+
+            Thread dataBackupThread = new Thread("MDB Thread") {
+                public void run() {
+                    UDPMulticast mdbSocket = pc.getMDBSocket();
+
+                    while (true) {
+                        DatagramPacket packet = mdbSocket.receive();
+
+                        String outStr = new String(packet.getData(), 0, packet.getLength());
+
+                        try {
+                            rec.parseMessage(outStr);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            };
+
+            dataBackupThread.start();
+
+            /*
+
+                User Interface
+
+             */
+
+            while (true) {
+                Scanner reader = new Scanner(System.in);
+
+                System.out.print("Path to file to backup: ");
+
+                String filePath = reader.next();
+
+                BackedUpFile f = null;
+
+                try {
+                    f = new BackedUpFile(filePath);
+                } catch (IOException e) {
+                    System.out.println("Unable to initiate a backup for the specified file.");
+
+                    e.printStackTrace();
+
+                    continue;
+                }
+
+                String fileId = f.getId();
+
+                for (int i = 0; i < f.getNumberOfChunks(); i++) {
+                    System.out.println("Backing up chunk " + i + "/" + f.getNumberOfChunks() + "...");
+
+                    ChunkBackupMessage m = new ChunkBackupMessage(kAppVersion, fileId, i, kReplicationDeg, f.getChunk(i));
+
+                    for (int tries = 0; f.getReplicationCountForChunk(i) < kReplicationDeg && tries < kMaxTriesPerChunk; tries++) {
+                        snd.sendMessage(m);
+
+                        //  Now, we need something here to get us the stored messages.
+                        //  I hereby summon a "singleton maroto"! - maybe.
+                        //  nope -> not needed! just update the backedupfile object
+                        //  f.getReplicationCountForChunk();
+                        //  f.increase...
+
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            //  Ignoring.
+                        }
+                    }
+                }
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
