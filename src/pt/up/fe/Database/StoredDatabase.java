@@ -3,14 +3,15 @@ package pt.up.fe.Database;
 import pt.up.fe.Filesystem.DataStorage;
 import pt.up.fe.Filesystem.StoredFile;
 
+import java.io.Serializable;
 import java.util.Vector;
 
 /**
  *      Contains information about the files from other systems that are backed up locally.
  */
 
-public class StoredDatabase extends Database {
-    DataStorage _ds;
+public class StoredDatabase extends Database implements Serializable {
+    transient DataStorage _ds;
 
     Vector<StoredFile> _files;
 

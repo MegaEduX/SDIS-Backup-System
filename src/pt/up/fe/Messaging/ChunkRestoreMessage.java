@@ -1,24 +1,10 @@
 package pt.up.fe.Messaging;
 
 public class ChunkRestoreMessage extends Message {
-    public String makeHeader(String version, String fileId, int chunkNo) {
-        return "GETCHUNK " + version + " " + fileId + " " + Integer.toString(chunkNo) + " ";
+    public ChunkRestoreMessage(String version, String fileId, int chunkNo) {
+        header = "GETCHUNK " + version + " " + fileId + " " + Integer.toString(chunkNo) + " ";
+        header +=  "\r\n\r\n";   //  Append two <CR><LF>
+
+        messageData = header.getBytes();    //  GETCHUNK doesn't have a body.
     }
-
-    public byte[] makeMessage(String header, byte[] data) {
-        this.header = header;
-        header += "\r\n\r\n";   //  Append two <CR><LF>
-
-        byte[] dataHeader = header.getBytes();
-
-        this.msg = concatByteArrays(dataHeader, data);
-        return this.msg;
-    }
-
-    public String confirmMessage(String version, String fileId, int chunkNo) {
-        return "CHUNK " + version + " " + fileId + " " + Integer.toString(chunkNo) + " ";
-    }
-
-
-
 }

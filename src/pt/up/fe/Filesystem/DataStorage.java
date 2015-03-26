@@ -35,7 +35,7 @@ public class DataStorage {
         return _dataStorePath;
     }
 
-    public void setDatStorePath(String path) {
+    public void setDataStorePath(String path) {
         _dataStorePath = path;
     }
 

@@ -13,7 +13,7 @@ import java.net.DatagramSocket;
 public class MessageSender {
     ProtocolController pc;
 
-    MessageSender(ProtocolController controller) {
+    public MessageSender(ProtocolController controller) {
         pc = controller;
     }
 
@@ -21,7 +21,7 @@ public class MessageSender {
      *      Parse the message and send it using the Protocol Controller.
      */
 
-    void sendMessage(Message m) throws IOException {
+    public void sendMessage(Message m) throws IOException {
         if(m.getHeader().equals("PUTCHUNK")){
             pc.getMDBSocket().send(m.toString());
         }

@@ -1,10 +1,8 @@
 package pt.up.fe.Database;
 
-import pt.up.fe.Filesystem.File;
+import java.io.Serializable;
 
-import java.util.Vector;
-
-public class Database {
+public class Database implements Serializable {
     //  Vector<File> _files;
 
     /*
