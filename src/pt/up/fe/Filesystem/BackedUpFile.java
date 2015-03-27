@@ -13,7 +13,8 @@ import java.security.MessageDigest;
  */
 
 public class BackedUpFile extends File {
-    String _path;
+    private String _path;
+    private String _lastModified;
 
     public BackedUpFile(String pathToFile) throws IOException {
         super();
@@ -24,16 +25,23 @@ public class BackedUpFile extends File {
 
         _id = new String(generateFileId(), "UTF-8");
         _numberOfChunks = (int)(File.getFileSizeInBytes(_path) / kChunkLengthInBytes);
+
+        Path file = Paths.get(_path);
+        BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
+
+        _lastModified = attr.lastModifiedTime().toString();
+    }
+
+    public String getPath() {
+        return _path;
+    }
+
+    public String getLastModified() {
+        return _lastModified;
     }
 
     private byte[] generateFileId() throws IOException {
-        Path file = Paths.get(_path);
-
-        BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
-
-        String lmt = attr.lastModifiedTime().toString();
-
-        String idBeforeSHA = _path + lmt;
+        String idBeforeSHA = _path + _lastModified;
 
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

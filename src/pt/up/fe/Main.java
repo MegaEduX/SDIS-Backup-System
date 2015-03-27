@@ -93,51 +93,132 @@ public class Main {
 
             /*
 
+                MDR Thread
+
+             */
+
+            Thread dataRestoreThread = new Thread("MDR Thread") {
+                public void run() {
+                    UDPMulticast mdrSocket = pc.getMDRSocket();
+
+                    while (true) {
+                        DatagramPacket packet = mdrSocket.receive();
+
+                        String outStr = new String(packet.getData(), 0, packet.getLength());
+
+                        try {
+                            rec.parseMessage(outStr);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            };
+
+            /*
+
                 User Interface
 
              */
 
             while (true) {
+                System.out.println("##APP_NAME_HERE## is running.");
+                System.out.println("");
+                System.out.println("[1] Backup File...");
+                System.out.println("[2] Restore File...");
+                System.out.println("[0] Clean Up and Exit");
+                System.out.println("");
+                System.out.print("Choice: ");
+
                 Scanner reader = new Scanner(System.in);
 
-                System.out.print("Path to file to backup: ");
+                switch (Integer.parseInt(reader.next())) {
+                    case 1:
 
-                String filePath = reader.next();
+                        System.out.println("");
 
-                BackedUpFile f = null;
+                        System.out.print("Path to file to backup: ");
 
-                try {
-                    f = new BackedUpFile(filePath);
-                } catch (IOException e) {
-                    System.out.println("Unable to initiate a backup for the specified file.");
+                        String filePath = reader.next();
 
-                    e.printStackTrace();
-
-                    continue;
-                }
-
-                String fileId = f.getId();
-
-                for (int i = 0; i < f.getNumberOfChunks(); i++) {
-                    System.out.println("Backing up chunk " + i + "/" + f.getNumberOfChunks() + "...");
-
-                    ChunkBackupMessage m = new ChunkBackupMessage(kAppVersion, fileId, i, kReplicationDeg, f.getChunk(i));
-
-                    for (int tries = 0; f.getReplicationCountForChunk(i) < kReplicationDeg && tries < kMaxTriesPerChunk; tries++) {
-                        snd.sendMessage(m);
-
-                        //  Now, we need something here to get us the stored messages.
-                        //  I hereby summon a "singleton maroto"! - maybe.
-                        //  nope -> not needed! just update the backedupfile object
-                        //  f.getReplicationCountForChunk();
-                        //  f.increase...
+                        BackedUpFile f = null;
 
                         try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            //  Ignoring.
+                            f = new BackedUpFile(filePath);
+                        } catch (IOException e) {
+                            System.out.println("Unable to initiate a backup for the specified file.");
+
+                            e.printStackTrace();
+
+                            continue;
                         }
-                    }
+
+                        String fileId = f.getId();
+
+                        for (int i = 0; i < f.getNumberOfChunks(); i++) {
+                            System.out.println("Backing up chunk " + i + "/" + f.getNumberOfChunks() + "...");
+
+                            ChunkBackupMessage m = new ChunkBackupMessage(kAppVersion, fileId, i, kReplicationDeg, f.getChunk(i));
+
+                            for (int tries = 0; f.getReplicationCountForChunk(i) < kReplicationDeg && tries < kMaxTriesPerChunk; tries++) {
+                                snd.sendMessage(m);
+
+                                try {
+                                    Thread.sleep((long) (Math.random() * 400));
+                                } catch (InterruptedException e) {
+                                    //  Ignoring.
+                                }
+                            }
+                        }
+
+                        break;
+
+                    case 2:
+
+                        System.out.println("");
+                        System.out.println("Backed Up File List:");
+                        System.out.println("");
+
+                        int i = 0;
+
+                        for (BackedUpFile bf : DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles())
+                            System.out.println("[" + ++i + "] " + bf.getPath() + " (" + bf.getLastModified() + ")");
+
+                        System.out.println("");
+                        System.out.println("Showing " + i + " results.");
+                        System.out.println("");
+                        System.out.println("Which file do you wish to restore? (0 to cancel): ");
+
+                        int choice = Integer.parseInt(reader.next());
+
+                        while (choice > i || choice < 0) {
+                            System.out.println("");
+                            System.out.print("Invalid choice. Please retry: ");
+
+                            choice = Integer.parseInt(reader.next());
+                        }
+
+                        //  TODO: A lot of code here.
+
+                        if (choice == 0) {
+
+                        } else {
+
+                        }
+
+                        break;
+
+                    case 0:
+
+                        break;
+
+                    default:
+
+                        System.out.println("");
+                        System.out.println("Invalid choice!");
+                        System.out.println("");
+
+                        continue;
                 }
             }
 

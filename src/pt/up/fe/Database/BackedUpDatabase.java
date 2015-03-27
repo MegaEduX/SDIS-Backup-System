@@ -16,5 +16,7 @@ public class BackedUpDatabase implements Serializable {
 
     }
 
-
+    public Vector<BackedUpFile> getBackedUpFiles() {
+        return _files;
+    }
 }
