@@ -1,7 +1,9 @@
 package pt.up.fe.Filesystem;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
+import pt.up.fe.Database.BackedUpDatabase;
+import pt.up.fe.Database.StoredDatabase;
+
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,15 +14,69 @@ import java.util.Vector;
  */
 
 public class DataStorage {
+    private static final DataStorage Instance = new DataStorage();
+
+    private StoredDatabase storedDatabase = null;
+    private BackedUpDatabase backedUpDatabase = null;
+
+    private static final String kStoredDatabaseSerializedFileName = "storedDatabase.sdis";
+    private static final String kBackedUpDatabaseSerializedFileName = "backedUpDatabase.sdis";
+
+    private DataStorage() {
+        if (Instance != null) {
+            throw new IllegalStateException("Already instantiated!");
+        }
+    }
+
+    public static DataStorage getInstance() {
+        return Instance;
+    }
 
     private String _dataStorePath;
 
-    public DataStorage(String path) throws IOException {
-        _dataStorePath = path;
+    private void _consistencyCheck() {
+        if (_dataStorePath != null)
+            throw new IllegalStateException("Data Store wasn't instantiated!");
     }
 
-    public String getDataStorePath() {
+    /*  public String getDataStorePath() {
         return _dataStorePath;
+    }   */
+
+    public StoredDatabase getStoredDatabase() {
+        return storedDatabase;
+    }
+
+    public BackedUpDatabase getBackedUpDatabase() {
+        return backedUpDatabase;
+    }
+
+    public void setDataStorePath(String path) {
+        _dataStorePath = path;
+
+        try {
+            FileInputStream fis = new FileInputStream(appendPaths(_dataStorePath, kStoredDatabaseSerializedFileName));
+            ObjectInputStream ois = new ObjectInputStream(fis);
+
+            storedDatabase = (StoredDatabase) ois.readObject();
+
+            ois.close();
+            fis.close();
+        } catch (Exception e) {
+            storedDatabase = new StoredDatabase();
+        }
+
+        try {
+            FileInputStream fis = new FileInputStream(appendPaths(_dataStorePath, kBackedUpDatabaseSerializedFileName));
+            ObjectInputStream ois = new ObjectInputStream(fis);
+
+            backedUpDatabase = (BackedUpDatabase) ois.readObject();
+
+            ois.close();
+            fis.close();
+        } catch (Exception e) {
+            storedDatabase = new StoredDatabase();
+        }
     }
 
     //  Borrowed from http://stackoverflow.com/questions/711993/does-java-have-a-path-joining-method
@@ -37,6 +93,8 @@ public class DataStorage {
     }
 
     public Vector<String> chunkList() {
+        _consistencyCheck();
+
         java.io.File currentDir = new java.io.File(_dataStorePath);
 
         java.io.File[] fileList = currentDir.listFiles();
@@ -49,13 +107,17 @@ public class DataStorage {
         return chunks;
     }
 
-    boolean chunkExists(String fileId, int chunkId) {
+    public boolean chunkExists(String fileId, int chunkId) {
+        _consistencyCheck();
+
         java.io.File f = new java.io.File(chunkFileName(fileId, chunkId));
 
         return f.exists();
     }
 
-    boolean storeChunk(String fileId, int chunkId, byte[] data) {
+    public boolean storeChunk(String fileId, int chunkId, byte[] data) {
+        _consistencyCheck();
+
         try {
             FileOutputStream fos = new FileOutputStream(chunkFileName(fileId, chunkId));
 
@@ -70,12 +132,56 @@ public class DataStorage {
         return false;
     }
 
-    byte[] retrieveChunk(String fileId, int chunkId) throws IOException {
+    public boolean removeChunk(String fileId, int chunkId) {
+        _consistencyCheck();
+
+        try {
+            Files.delete(Paths.get(appendPaths(_dataStorePath, chunkFileName(fileId, chunkId))));
+
+            return true;
+        } catch (IOException e) {
+
+        }
+
+        return false;
+    }
+
+    public byte[] retrieveChunk(String fileId, int chunkId) throws IOException {
+        _consistencyCheck();
+
         String pathToChunk = appendPaths(_dataStorePath, chunkFileName(fileId, chunkId));
 
         Path path = Paths.get(pathToChunk);
 
         return Files.readAllBytes(path);
+    }
+
+    public void synchronize() {
+        //  Synchronize the data on RAM to the disk.
+
+        try {
+            FileOutputStream fos = new FileOutputStream(appendPaths(_dataStorePath, kStoredDatabaseSerializedFileName));
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+
+            oos.writeObject(storedDatabase);
+
+            oos.close();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            FileOutputStream fos = new FileOutputStream(appendPaths(_dataStorePath, kBackedUpDatabaseSerializedFileName));
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+
+            oos.writeObject(backedUpDatabase);
+
+            oos.close();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

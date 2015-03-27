@@ -9,25 +9,25 @@ import java.io.IOException;
 public class ProtocolController {
     UDPMulticast MCSocket, MDBSocket, MDRSocket;
 
-    ProtocolController(String MCAddress, int MCPort, String MDBAddress, int MDBPort, String MDRAddress, int MDRPort) throws IOException {
+    public ProtocolController(String MCAddress, int MCPort, String MDBAddress, int MDBPort, String MDRAddress, int MDRPort) throws IOException {
         MCSocket = new UDPMulticast(MCAddress, MCPort);
         MDBSocket = new UDPMulticast(MDBAddress, MDBPort);
         MDRSocket = new UDPMulticast(MDRAddress, MDRPort);
     }
 
-    UDPMulticast getMCSocket() {
+    public UDPMulticast getMCSocket() {
         return MCSocket;
     }
 
-    UDPMulticast getMDBSocket() {
+    public UDPMulticast getMDBSocket() {
         return MDBSocket;
     }
 
-    UDPMulticast getMDRSocket() {
+    public UDPMulticast getMDRSocket() {
         return MDRSocket;
     }
 
-    void close() {
+    public void close() {
         MCSocket.close();
         MDBSocket.close();
         MDRSocket.close();
