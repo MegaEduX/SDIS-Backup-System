@@ -2,10 +2,15 @@ package pt.up.fe;
 
 import pt.up.fe.Filesystem.*;
 import pt.up.fe.Messaging.ChunkBackupMessage;
+import pt.up.fe.Messaging.ChunkRestoreAnswerMessage;
+import pt.up.fe.Messaging.ChunkRestoreMessage;
 import pt.up.fe.Networking.MessageReceiver;
 import pt.up.fe.Networking.MessageSender;
 import pt.up.fe.Networking.ProtocolController;
 import pt.up.fe.Networking.UDPMulticast;
+import pt.up.fe.Threading.MC;
+import pt.up.fe.Threading.MDB;
+import pt.up.fe.Threading.MDR;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -45,25 +50,9 @@ public class Main {
 
              */
 
-            Thread controlChannelThread = new Thread("MC Thread") {
-                public void run() {
-                    UDPMulticast mcSocket = pc.getMCSocket();
+            MC controlChannelThread = new MC(pc, rec);
 
-                    while (true) {
-                        DatagramPacket packet = mcSocket.receive();
-
-                        String outStr = new String(packet.getData(), 0, packet.getLength());
-
-                        try {
-                            rec.parseMessage(outStr);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            };
-
-            controlChannelThread.start();
+            new Thread(controlChannelThread).start();
 
             /*
 
@@ -71,25 +60,9 @@ public class Main {
 
              */
 
-            Thread dataBackupThread = new Thread("MDB Thread") {
-                public void run() {
-                    UDPMulticast mdbSocket = pc.getMDBSocket();
+            MDB dataBackupThread = new MDB(pc, rec);
 
-                    while (true) {
-                        DatagramPacket packet = mdbSocket.receive();
-
-                        String outStr = new String(packet.getData(), 0, packet.getLength());
-
-                        try {
-                            rec.parseMessage(outStr);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            };
-
-            dataBackupThread.start();
+            new Thread(dataBackupThread).start();
 
             /*
 
@@ -97,23 +70,9 @@ public class Main {
 
              */
 
-            Thread dataRestoreThread = new Thread("MDR Thread") {
-                public void run() {
-                    UDPMulticast mdrSocket = pc.getMDRSocket();
+            MDR dataRestoreThread = new MDR(pc, rec);
 
-                    while (true) {
-                        DatagramPacket packet = mdrSocket.receive();
-
-                        String outStr = new String(packet.getData(), 0, packet.getLength());
-
-                        try {
-                            rec.parseMessage(outStr);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            };
+            //  Not started!
 
             /*
 
@@ -198,12 +157,34 @@ public class Main {
                             choice = Integer.parseInt(reader.next());
                         }
 
-                        //  TODO: A lot of code here.
+                        if (choice == 0)
+                            continue;
+                        else {
+                            new Thread(dataRestoreThread).start();
 
-                        if (choice == 0) {
+                            BackedUpFile bf = DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles().get(i - 1);
 
-                        } else {
+                            System.out.println("Restoring " + bf.getPath() + "...");
 
+                            for (int j = 0; j < bf.getNumberOfChunks(); j++) {
+                                System.out.println("Restoring chunk " + j + "/" + bf.getNumberOfChunks() + "...");
+
+                                snd.sendMessage(new ChunkRestoreMessage(kAppVersion, bf.getId(), j));
+
+                                try {
+                                    Thread.sleep((long) (Math.random() * 400));
+                                } catch (InterruptedException e) {
+                                    //  Ignoring.
+                                }
+                            }
+
+                            try {
+                                Thread.sleep((long) 2000);
+                            } catch (InterruptedException e) {
+                                //  Ignoring.
+                            }
+
+                            dataRestoreThread.terminate();
                         }
 
                         break;
