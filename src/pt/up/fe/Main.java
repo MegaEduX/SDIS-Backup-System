@@ -1,10 +1,7 @@
 package pt.up.fe;
 
 import pt.up.fe.Filesystem.*;
-import pt.up.fe.Messaging.ChunkRestoreMessage;
-import pt.up.fe.Messaging.ChunkBackupMessage;
-import pt.up.fe.Messaging.FileDeletionMessage;
-import pt.up.fe.Messaging.Message;
+import pt.up.fe.Messaging.*;
 import pt.up.fe.Networking.MessageReceiver;
 import pt.up.fe.Networking.MessageSender;
 import pt.up.fe.Networking.ProtocolController;
@@ -97,7 +94,7 @@ public class Main {
                 System.out.println("[1] Backup File...");
                 System.out.println("[2] Restore File...");
                 System.out.println("[3] Remove Local (Backed Up) File...");
-                System.out.println("[4] Free Up Space (Remove Stored File)...");
+                System.out.println("[4] Free Up Space (Remove Stored Chunks)...");
                 System.out.println("[0] Clean Up and Exit");
                 System.out.println("");
                 System.out.print("Choice: ");
@@ -272,7 +269,48 @@ public class Main {
 
                     case 4: {
 
-                        //  TODO: Case 4
+                        System.out.println("");
+                        System.out.println("Use this interface to remove a number of chunks stored on your system in order to free up disk space.");
+                        System.out.println("");
+
+                        System.out.println("Number of chunks to remove (0 to cancel):");
+
+                        int choice = Integer.parseInt(reader.next());
+
+                        while (choice < 0) {
+                            System.out.println("");
+                            System.out.print("Invalid choice. Please retry: ");
+
+                            choice = Integer.parseInt(reader.next());
+                        }
+
+                        if (choice == 0)
+                            continue;
+                        else {
+                            int i = 0;
+
+                            for (StoredFile sf : ds.getStoredDatabase().getStoredFiles()) {
+                                for (Integer chunk : sf.getChunksStored()) {
+                                    ds.removeChunk(sf.getId(), chunk);
+
+                                    try {
+                                        snd.sendMessage(new SpaceReclaimMessage(kAppVersion, sf.getId(), chunk));
+                                    } catch (MessageSender.UnknownMessageException e) {
+
+                                    }
+
+                                    i++;
+
+                                    if (i == choice)
+                                        break;
+                                }
+
+                                if (i == choice)
+                                    break;
+                            }
+
+                            System.out.println("Operation Complete. Removed " + i + " chunks.");
+                        }
 
                         break;
                     }
