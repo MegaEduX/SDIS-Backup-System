@@ -11,6 +11,8 @@ public class MDB implements Runnable {
     private ProtocolController pc;
     private MessageReceiver rec;
 
+    private UDPMulticast mdbSocket;
+
     volatile boolean running = true;
 
     public MDB(ProtocolController protocolController, MessageReceiver messageReceiver) {
@@ -19,25 +21,31 @@ public class MDB implements Runnable {
     }
 
     @Override public void run() {
-        UDPMulticast mdbSocket = pc.getMDBSocket();
+        mdbSocket = pc.getMDBSocket();
 
         while (true) {
             if (!running)
                 return;
 
-            DatagramPacket packet = mdbSocket.receive();
-
-            String outStr = new String(packet.getData(), 0, packet.getLength());
-
             try {
-                rec.parseMessage(outStr);
-            } catch (IOException e) {
-                e.printStackTrace();
+                DatagramPacket packet = mdbSocket.receive();
+
+                String outStr = new String(packet.getData(), 0, packet.getLength());
+
+                try {
+                    rec.parseMessage(outStr);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+
             }
         }
     }
 
     public void terminate() {
         running = false;
+
+        mdbSocket.close();
     }
 }

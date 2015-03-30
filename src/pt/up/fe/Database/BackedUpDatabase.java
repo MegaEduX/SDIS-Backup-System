@@ -13,7 +13,7 @@ public class BackedUpDatabase implements Serializable {
     Vector<BackedUpFile> _files;
 
     public BackedUpDatabase() {
-
+        _files = new Vector<>();
     }
 
     public Vector<BackedUpFile> getBackedUpFiles() {

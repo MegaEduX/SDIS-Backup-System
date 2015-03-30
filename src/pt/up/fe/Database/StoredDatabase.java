@@ -16,7 +16,7 @@ public class StoredDatabase extends Database implements Serializable {
     Vector<StoredFile> _files;
 
     public StoredDatabase() {
-        load();
+        //  load();
     }
 
     public Vector<StoredFile> getStoredFiles() {
@@ -41,7 +41,7 @@ public class StoredDatabase extends Database implements Serializable {
         _files.remove(f);
     }
 
-    public void load() {
+    /*  public void load() {
         _files = new Vector<StoredFile>();
 
         Vector<String> cl = DataStorage.getInstance().chunkList();
@@ -68,5 +68,5 @@ public class StoredDatabase extends Database implements Serializable {
 
             _files.add(new StoredFile(fileId, chunks));
         }
-    }
+    }   */
 }

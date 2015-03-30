@@ -11,6 +11,8 @@ public class MC implements Runnable {
     private ProtocolController pc;
     private MessageReceiver rec;
 
+    private UDPMulticast mcSocket;
+
     volatile boolean running = true;
 
     public MC(ProtocolController protocolController, MessageReceiver messageReceiver) {
@@ -19,25 +21,31 @@ public class MC implements Runnable {
     }
 
     @Override public void run() {
-        UDPMulticast mcSocket = pc.getMCSocket();
+        mcSocket = pc.getMCSocket();
 
         while (true) {
             if (!running)
                 return;
 
-            DatagramPacket packet = mcSocket.receive();
-
-            String outStr = new String(packet.getData(), 0, packet.getLength());
-
             try {
-                rec.parseMessage(outStr);
-            } catch (IOException e) {
-                e.printStackTrace();
+                DatagramPacket packet = mcSocket.receive();
+
+                String outStr = new String(packet.getData(), 0, packet.getLength());
+
+                try {
+                    rec.parseMessage(outStr);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+
             }
         }
     }
 
     public void terminate() {
         running = false;
+
+        mcSocket.close();
     }
 }

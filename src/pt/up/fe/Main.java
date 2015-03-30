@@ -3,6 +3,7 @@ package pt.up.fe;
 import pt.up.fe.Filesystem.*;
 import pt.up.fe.Messaging.ChunkRestoreMessage;
 import pt.up.fe.Messaging.ChunkBackupMessage;
+import pt.up.fe.Messaging.Message;
 import pt.up.fe.Networking.MessageReceiver;
 import pt.up.fe.Networking.MessageSender;
 import pt.up.fe.Networking.ProtocolController;
@@ -15,12 +16,20 @@ import java.util.Scanner;
 
 public class Main {
 
-    public static String kAppVersion = "1.0";
-    public static int kReplicationDeg = 5;
-    public static int kMaxTriesPerChunk = 5;
+    public static final String kAppName = "##APP_NAME_HERE##";
+    public static final String kAppVersion = "1.0";
+
+    public static final int kReplicationDeg = 5;
+    public static final int kMaxTriesPerChunk = 5;
 
     public static void main(String[] args) {
         try {
+
+            /*  if (args.length != 6) {
+                System.out.println("Usage: project <MC Multicast IP Address> <MC Port> <MDB Multicast IP Address> <MDB Port> <MDR Multicast IP Address> <MDR Port>");
+
+                return;
+            }   */
 
             /*
 
@@ -36,7 +45,9 @@ public class Main {
 
             ds.setDataStorePath("/Users/MegaEduX/DataStorage/");
 
-            final ProtocolController pc = new ProtocolController(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]), args[4], Integer.parseInt(args[5]));
+            //  final ProtocolController pc = new ProtocolController(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]), args[4], Integer.parseInt(args[5]));
+
+            final ProtocolController pc = new ProtocolController("224.1.1.1", 1234, "224.2.2.2", 2345, "224.3.3.3", 3456);
 
             final MessageReceiver rec = new MessageReceiver(pc);
             final MessageSender snd = new MessageSender(pc);
@@ -77,8 +88,9 @@ public class Main {
 
              */
 
+            System.out.println(kAppName + " is running.");
+
             while (true) {
-                System.out.println("##APP_NAME_HERE## is running.");
                 System.out.println("");
                 System.out.println("[1] Backup File...");
                 System.out.println("[2] Restore File...");
@@ -97,27 +109,33 @@ public class Main {
 
                         String filePath = reader.next();
 
-                        BackedUpFile f = null;
+                        BackedUpFile f;
 
                         try {
                             f = new BackedUpFile(filePath);
                         } catch (IOException e) {
                             System.out.println("Unable to initiate a backup for the specified file.");
 
-                            e.printStackTrace();
+                            //  e.printStackTrace();
 
                             continue;
                         }
 
                         String fileId = f.getId();
 
+                        System.out.println("");
+
                         for (int i = 0; i < f.getNumberOfChunks(); i++) {
-                            System.out.println("Backing up chunk " + i + "/" + f.getNumberOfChunks() + "...");
+                            System.out.println("Backing up chunk " + (i + 1) + "/" + f.getNumberOfChunks() + "...");    //  Peasants start counting at 1...
 
                             ChunkBackupMessage m = new ChunkBackupMessage(kAppVersion, fileId, i, kReplicationDeg, f.getChunk(i));
 
                             for (int tries = 0; f.getReplicationCountForChunk(i) < kReplicationDeg && tries < kMaxTriesPerChunk; tries++) {
-                                snd.sendMessage(m);
+                                try {
+                                    snd.sendMessage(m);
+                                } catch (MessageSender.UnknownMessageException e) {
+                                    System.out.println("Unknown message discarded...");
+                                }
 
                                 try {
                                     Thread.sleep((long) (Math.random() * 400));
@@ -126,6 +144,8 @@ public class Main {
                                 }
                             }
                         }
+
+                        System.out.println("Operation Complete.");
 
                         break;
 
@@ -143,7 +163,7 @@ public class Main {
                         System.out.println("");
                         System.out.println("Showing " + i + " results.");
                         System.out.println("");
-                        System.out.println("Which file do you wish to restore? (0 to cancel): ");
+                        System.out.print("Which file do you wish to restore? (0 to cancel): ");
 
                         int choice = Integer.parseInt(reader.next());
 
@@ -166,7 +186,11 @@ public class Main {
                             for (int j = 0; j < bf.getNumberOfChunks(); j++) {
                                 System.out.println("Restoring chunk " + j + "/" + bf.getNumberOfChunks() + "...");
 
-                                snd.sendMessage(new ChunkRestoreMessage(kAppVersion, bf.getId(), j));
+                                try {
+                                    snd.sendMessage(new ChunkRestoreMessage(kAppVersion, bf.getId(), j));
+                                } catch (MessageSender.UnknownMessageException e) {
+                                    System.out.println("Unknown message discarded...");
+                                }
 
                                 try {
                                     Thread.sleep((long) (Math.random() * 400));
@@ -187,6 +211,17 @@ public class Main {
                         break;
 
                     case 0:
+
+                        System.out.println("");
+
+                        System.out.println("Closing sockets...");
+
+                        controlChannelThread.terminate();
+                        dataBackupThread.terminate();
+
+                        System.out.println("Terminating...");
+
+                        System.exit(0);
 
                         break;
 

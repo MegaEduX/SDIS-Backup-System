@@ -49,18 +49,36 @@ public class File {
     }
 
     public int getReplicationCountForChunk(int chunk) {
-        return _replicationStatus.get(chunk);
+        try {
+            return _replicationStatus.get(chunk);
+        } catch (Exception e) {
+
+        }
+
+        return 0;
     }
 
     public void increaseReplicationCountForChunk(int chunk) {
-        int count = _replicationStatus.get(chunk);
+        int count = 0;
+
+        try {
+            count = _replicationStatus.get(chunk);
+        } catch (Exception e) {
+
+        }
 
         _replicationStatus.remove(chunk);
         _replicationStatus.put(chunk, count + 1);
     }
 
     public boolean decreaseReplicationCountForChunk(int chunk) {
-        int count = _replicationStatus.get(chunk);
+        int count = 0;
+
+        try {
+            count = _replicationStatus.get(chunk);
+        } catch (Exception e) {
+
+        }
 
         if (count < 1)
             return false;

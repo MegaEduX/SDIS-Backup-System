@@ -11,6 +11,8 @@ public class MDR implements Runnable {
     private ProtocolController pc;
     private MessageReceiver rec;
 
+    private UDPMulticast mdrSocket;
+
     volatile boolean running = true;
 
     public MDR(ProtocolController protocolController, MessageReceiver messageReceiver) {
@@ -19,25 +21,31 @@ public class MDR implements Runnable {
     }
 
     @Override public void run() {
-        UDPMulticast mdrSocket = pc.getMDRSocket();
+        mdrSocket = pc.getMDRSocket();
 
         while (true) {
             if (!running)
                 return;
 
-            DatagramPacket packet = mdrSocket.receive();
-
-            String outStr = new String(packet.getData(), 0, packet.getLength());
-
             try {
-                rec.parseMessage(outStr);
-            } catch (IOException e) {
-                e.printStackTrace();
+                DatagramPacket packet = mdrSocket.receive();
+
+                String outStr = new String(packet.getData(), 0, packet.getLength());
+
+                try {
+                    rec.parseMessage(outStr);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+
             }
         }
     }
 
     public void terminate() {
         running = false;
+
+        mdrSocket.close();
     }
 }

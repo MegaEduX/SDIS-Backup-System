@@ -11,6 +11,13 @@ import java.net.DatagramSocket;
  */
 
 public class MessageSender {
+
+    public class UnknownMessageException extends Exception {
+        public UnknownMessageException() {
+            super();
+        }
+    }
+
     ProtocolController pc;
 
     public MessageSender(ProtocolController controller) {
@@ -21,24 +28,29 @@ public class MessageSender {
      *      Parse the message and send it using the Protocol Controller.
      */
 
-    public void sendMessage(Message m) throws IOException {
-        if(m.getHeader().equals("PUTCHUNK")){
+    public void sendMessage(Message m) throws IOException, UnknownMessageException {
+        String messageType = m.getHeader().split(" ")[0];
+
+        if (messageType.equals("PUTCHUNK"))
             pc.getMDBSocket().send(m.toString());
-        }
-        else if(m.getHeader().equals("STORED")){
+
+        else if (messageType.equals("STORED"))
             pc.getMCSocket().send(m.toString());
-        }
-        else if(m.getHeader().equals("GETCHUNK")){
+
+        else if (messageType.equals("GETCHUNK"))
             pc.getMCSocket().send(m.toString());
-        }
-        else if(m.getHeader().equals("CHUNK")){
+
+        else if (messageType.equals("CHUNK"))
             pc.getMDRSocket().send(m.toString());
-        }
-        else if(m.getHeader().equals("DELETE")){
+
+        else if (messageType.equals("DELETE"))
             pc.getMCSocket().send(m.toString());
-        }
-        else if(m.getHeader().equals("REMOVED")){
+
+        else if (messageType.equals("REMOVED"))
             pc.getMCSocket().send(m.toString());
-        }
+
+        else
+            throw new UnknownMessageException();
+
     }
 }

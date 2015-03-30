@@ -35,7 +35,7 @@ public class DataStorage {
     private String _dataStorePath;
 
     private void _consistencyCheck() {
-        if (_dataStorePath != null)
+        if (_dataStorePath == null)
             throw new IllegalStateException("Data Store wasn't instantiated!");
     }
 
@@ -75,7 +75,7 @@ public class DataStorage {
             ois.close();
             fis.close();
         } catch (Exception e) {
-            storedDatabase = new StoredDatabase();
+            backedUpDatabase = new BackedUpDatabase();
         }
     }
 
