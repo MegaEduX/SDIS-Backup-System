@@ -1,19 +1,16 @@
 package pt.up.fe;
 
 import pt.up.fe.Filesystem.*;
-import pt.up.fe.Messaging.ChunkBackupMessage;
-import pt.up.fe.Messaging.ChunkRestoreAnswerMessage;
 import pt.up.fe.Messaging.ChunkRestoreMessage;
+import pt.up.fe.Messaging.ChunkBackupMessage;
 import pt.up.fe.Networking.MessageReceiver;
 import pt.up.fe.Networking.MessageSender;
 import pt.up.fe.Networking.ProtocolController;
-import pt.up.fe.Networking.UDPMulticast;
 import pt.up.fe.Threading.MC;
 import pt.up.fe.Threading.MDB;
 import pt.up.fe.Threading.MDR;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.util.Scanner;
 
 public class Main {
