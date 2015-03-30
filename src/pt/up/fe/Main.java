@@ -3,6 +3,7 @@ package pt.up.fe;
 import pt.up.fe.Filesystem.*;
 import pt.up.fe.Messaging.ChunkRestoreMessage;
 import pt.up.fe.Messaging.ChunkBackupMessage;
+import pt.up.fe.Messaging.FileDeletionMessage;
 import pt.up.fe.Messaging.Message;
 import pt.up.fe.Networking.MessageReceiver;
 import pt.up.fe.Networking.MessageSender;
@@ -12,6 +13,7 @@ import pt.up.fe.Threading.MDB;
 import pt.up.fe.Threading.MDR;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class Main {
@@ -94,6 +96,8 @@ public class Main {
                 System.out.println("");
                 System.out.println("[1] Backup File...");
                 System.out.println("[2] Restore File...");
+                System.out.println("[3] Remove Local (Backed Up) File...");
+                System.out.println("[4] Free Up Space (Remove Stored File)...");
                 System.out.println("[0] Clean Up and Exit");
                 System.out.println("");
                 System.out.print("Choice: ");
@@ -101,7 +105,7 @@ public class Main {
                 Scanner reader = new Scanner(System.in);
 
                 switch (Integer.parseInt(reader.next())) {
-                    case 1:
+                    case 1: {
 
                         System.out.println("");
 
@@ -148,8 +152,9 @@ public class Main {
                         System.out.println("Operation Complete.");
 
                         break;
+                    }
 
-                    case 2:
+                    case 2: {
 
                         System.out.println("");
                         System.out.println("Backed Up File List:");
@@ -209,8 +214,70 @@ public class Main {
                         }
 
                         break;
+                    }
 
-                    case 0:
+                    case 3: {
+
+                        System.out.println("");
+                        System.out.println("Use this interface to remove a file from your file system and from peers who have it backed up.");
+                        System.out.println("");
+
+                        System.out.println("Backed Up File List:");
+                        System.out.println("");
+
+                        int i = 0;
+
+                        for (BackedUpFile bf : DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles())
+                            System.out.println("[" + ++i + "] " + bf.getPath() + " (" + bf.getLastModified() + ")");
+
+                        System.out.println("");
+                        System.out.println("Showing " + i + " results.");
+                        System.out.println("");
+                        System.out.print("Which file do you wish to delete (permanently)? (0 to cancel): ");
+
+                        int choice = Integer.parseInt(reader.next());
+
+                        while (choice > i || choice < 0) {
+                            System.out.println("");
+                            System.out.print("Invalid choice. Please retry: ");
+
+                            choice = Integer.parseInt(reader.next());
+                        }
+
+                        if (choice == 0)
+                            continue;
+                        else {
+                            new Thread(dataRestoreThread).start();
+
+                            BackedUpFile bf = DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles().get(i - 1);
+
+                            System.out.println("Restoring " + bf.getPath() + "...");
+
+                            java.io.File f = new java.io.File(bf.getPath());
+
+                            if (!f.delete())
+                                System.out.println("Unable to delete it locally - proceeding anyway and deleting from remote peers...");
+
+                            try {
+                                snd.sendMessage(new FileDeletionMessage(kAppVersion, bf.getId()));
+                            } catch (MessageSender.UnknownMessageException e) {
+
+                            }
+                        }
+
+                        System.out.println("Operation Complete.");
+
+                        break;
+                    }
+
+                    case 4: {
+
+                        //  TODO: Case 4
+
+                        break;
+                    }
+
+                    case 0: {
 
                         System.out.println("");
 
@@ -224,14 +291,16 @@ public class Main {
                         System.exit(0);
 
                         break;
+                    }
 
-                    default:
+                    default: {
 
                         System.out.println("");
                         System.out.println("Invalid choice!");
                         System.out.println("");
 
                         continue;
+                    }
                 }
             }
 
