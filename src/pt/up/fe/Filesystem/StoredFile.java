@@ -17,4 +17,8 @@ public class StoredFile extends File implements Serializable {
         _chunksStored = fileChunksStored;
         _numberOfChunks = _chunksStored.size();
     }
+
+    public Vector<Integer> getChunksStored() {
+        return _chunksStored;
+    }
 }

@@ -10,6 +10,8 @@ import pt.up.fe.Threading.MDB;
 import pt.up.fe.Threading.MDR;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.Scanner;
 
@@ -250,15 +252,20 @@ public class Main {
 
                             System.out.println("Restoring " + bf.getPath() + "...");
 
-                            java.io.File f = new java.io.File(bf.getPath());
+                            try {
+                                Files.delete(Paths.get(bf.getPath()));
+                            } catch (NoSuchFileException e) {
+                                System.err.format("%s: no such" + " file or directory%n", bf.getPath());
 
-                            if (!f.delete())
-                                System.out.println("Unable to delete it locally - proceeding anyway and deleting from remote peers...");
+                                System.out.println("An error has occoured. Proceeding anyway...");
+                            } catch (IOException e) {
+                                System.out.println("An error has occoured. Proceeding anyway...");
+                            }
 
                             try {
                                 snd.sendMessage(new FileDeletionMessage(kAppVersion, bf.getId()));
                             } catch (MessageSender.UnknownMessageException e) {
-
+                                System.out.println("Unknown Message Type - this is an internal inconsistency error.");
                             }
                         }
 
@@ -296,7 +303,7 @@ public class Main {
                                     try {
                                         snd.sendMessage(new SpaceReclaimMessage(kAppVersion, sf.getId(), chunk));
                                     } catch (MessageSender.UnknownMessageException e) {
-
+                                        System.out.println("Unknown Message Type - this is an internal inconsistency error.");
                                     }
 
                                     i++;
@@ -337,7 +344,7 @@ public class Main {
                         System.out.println("Invalid choice!");
                         System.out.println("");
 
-                        continue;
+                        break;
                     }
                 }
             }

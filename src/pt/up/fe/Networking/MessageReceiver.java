@@ -37,6 +37,8 @@ public class MessageReceiver {
         pc = controller;
     }
 
+    //  TODO: The return of this function isn't specified well.
+
     public int parseMessage(String Message) throws IOException {
         String parsedMessage[] = Message.split(" ");
 
@@ -52,7 +54,7 @@ public class MessageReceiver {
                         parsedMessage[2],
                         Integer.parseInt(parsedMessage[3]));
 
-                pc.getMCSocket().send(msg.getMessageData().toString());
+                pc.getMCSocket().send(new String(msg.getMessageData(), "UTF-8"));
 
                 return PUTCHUNK_OK;
             } else {
@@ -72,7 +74,7 @@ public class MessageReceiver {
 
                 f.increaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
             } catch (FileNotFoundException e) {
-
+                System.out.println("File not found, proceeding anyway...");
             }
         }
 
@@ -89,36 +91,55 @@ public class MessageReceiver {
                     )
             );
 
-            pc.getMDRSocket().send(msg.getMessageData().toString());
+            pc.getMDRSocket().send(new String(msg.getMessageData(), "UTF-8"));
 
             return CHUNK_OK;
         }
 
-        if (parsedMessage.equals(kMessageTypeChunk)) {
+        if (parsedMessage[0].equals(kMessageTypeChunk)) {
             //  We should only receive this message if we are subscribed to the MDR.
             //  So, if we receive it, we want it.
+
+            //  TODO: CHUNK - It would be useful if the return of this function returned the received chunk data... Or something.
 
             System.out.println("Chunk recover done");
         }
 
         //  File deletion Protocol - DELETE <Version> <FileId> <CRLF><CRLF>
 
-        if (parsedMessage.equals(kMessageTypeDelete)) {
+        if (parsedMessage[0].equals(kMessageTypeDelete)) {
             try {
                 DataStorage.getInstance().getStoredDatabase().removeFileWithChunkId(parsedMessage[2]);
 
                 return DELETE_OK;
             } catch (FileNotFoundException e) {
-
+                System.out.println("Chunk not found, ignoring...");
             }
 
             return ERROR;
         }
 
-        //  Space Reclaiming Protocol
+        //  Space Reclaiming Protocol - REMOVED <Version> <FileId> <ChunkNo> <CRLF><CRLF>
 
-        if (parsedMessage.equals(kMessageTypeRemoved)) {
+        if (parsedMessage[0].equals(kMessageTypeRemoved)) {
+            boolean removed = false;
+
             System.out.println("Updating local counter...");
+
+            for (StoredFile f : DataStorage.getInstance().getStoredDatabase().getStoredFiles()) {
+                if (f.getId().equals(parsedMessage[2])) {
+                    f.decreaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
+
+                    removed = true;
+
+                    break;
+                }
+            }
+
+            if (removed)
+                System.out.println("Decreased replication count for " + parsedMessage[2] + ".");
+            else
+                System.out.println("Unable to decrease replication count for " + parsedMessage[2] + ".");
         }
 
         return ERROR;
