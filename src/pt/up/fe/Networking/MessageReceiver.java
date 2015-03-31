@@ -8,12 +8,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Observable;
 
 /**
  *      Maintains the receiving socket and parses incoming messages.
  */
 
-public class MessageReceiver {
+public class MessageReceiver extends Observable {
     ProtocolController pc;
 
     //  Variables
@@ -96,13 +97,20 @@ public class MessageReceiver {
             return CHUNK_OK;
         }
 
+        //  CHUNK <Version> <FileId> <ChunkNo> <CRLF><CRLF><Body>
+
         if (parsedMessage[0].equals(kMessageTypeChunk)) {
             //  We should only receive this message if we are subscribed to the MDR.
             //  So, if we receive it, we want it.
 
             //  TODO: CHUNK - It would be useful if the return of this function returned the received chunk data... Or something.
 
-            System.out.println("Chunk recover done");
+            System.out.println("Chunk recover done.");
+
+            String body = parsedMessage[parsedMessage.length - 1];
+
+            setChanged();
+            notifyObservers(body);
         }
 
         //  File deletion Protocol - DELETE <Version> <FileId> <CRLF><CRLF>

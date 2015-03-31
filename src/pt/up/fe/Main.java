@@ -13,9 +13,33 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
+import java.util.Observable;
 import java.util.Scanner;
+import java.util.Vector;
 
 public class Main {
+
+    private static class AtomicBoolean {
+        boolean bool;
+
+        public AtomicBoolean(boolean val) {
+            bool = val;
+        }
+
+        public synchronized void set(boolean val) {
+            bool = val;
+        }
+
+        public synchronized boolean get() {
+            return bool;
+        }
+    }
+
+    private static class RestoreFailedException extends Exception {
+        public RestoreFailedException() {
+            super();
+        }
+    }
 
     public static final String kAppName = "##APP_NAME_HERE##";
     public static final String kAppVersion = "1.0";
@@ -24,6 +48,9 @@ public class Main {
     public static final int kMaxTriesPerChunk = 5;
 
     public static void main(String[] args) {
+        MC controlChannelThread = null;
+        MDB dataBackupThread = null;
+
         try {
 
             /*  if (args.length != 6) {
@@ -42,9 +69,29 @@ public class Main {
 
              */
 
-            DataStorage ds = DataStorage.getInstance();
+            System.out.println(kAppName + " is running.");
 
-            ds.setDataStorePath("/Users/MegaEduX/DataStorage/");
+            System.out.println("");
+
+            Scanner reader = new Scanner(System.in);
+
+            while (true) {
+                try {
+                    System.out.print("Data Store Path: ");
+
+                    String path = reader.next();
+
+                    System.out.println("");
+
+                    DataStorage.getInstance().setDataStorePath(path);
+                    DataStorage.getInstance().synchronize();
+
+                    break;
+                } catch (IOException exc) {
+                    System.out.println("Unable to create system data. Please choose another directory.");
+                    System.out.println("");
+                }
+            }
 
             //  final ProtocolController pc = new ProtocolController(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]), args[4], Integer.parseInt(args[5]));
 
@@ -59,7 +106,7 @@ public class Main {
 
              */
 
-            MC controlChannelThread = new MC(pc, rec);
+            controlChannelThread = new MC(pc, rec);
 
             new Thread(controlChannelThread).start();
 
@@ -69,7 +116,7 @@ public class Main {
 
              */
 
-            MDB dataBackupThread = new MDB(pc, rec);
+            dataBackupThread = new MDB(pc, rec);
 
             new Thread(dataBackupThread).start();
 
@@ -89,10 +136,7 @@ public class Main {
 
              */
 
-            System.out.println(kAppName + " is running.");
-
             while (true) {
-                System.out.println("");
                 System.out.println("[1] Backup File...");
                 System.out.println("[2] Restore File...");
                 System.out.println("[3] Remove Local (Backed Up) File...");
@@ -100,8 +144,6 @@ public class Main {
                 System.out.println("[0] Clean Up and Exit");
                 System.out.println("");
                 System.out.print("Choice: ");
-
-                Scanner reader = new Scanner(System.in);
 
                 switch (Integer.parseInt(reader.next())) {
                     case 1: {
@@ -187,26 +229,63 @@ public class Main {
 
                             System.out.println("Restoring " + bf.getPath() + "...");
 
-                            for (int j = 0; j < bf.getNumberOfChunks(); j++) {
-                                System.out.println("Restoring chunk " + j + "/" + bf.getNumberOfChunks() + "...");
-
-                                try {
-                                    snd.sendMessage(new ChunkRestoreMessage(kAppVersion, bf.getId(), j));
-                                } catch (MessageSender.UnknownMessageException e) {
-                                    System.out.println("Unknown message discarded...");
-                                }
-
-                                try {
-                                    Thread.sleep((long) (Math.random() * 400));
-                                } catch (InterruptedException e) {
-                                    //  Ignoring.
-                                }
-                            }
-
                             try {
-                                Thread.sleep((long) 2000);
-                            } catch (InterruptedException e) {
-                                //  Ignoring.
+                                Vector<String> restoredChunks = new Vector<>();
+
+                                AtomicBoolean gotChunk = new AtomicBoolean(false);   //  Eww.
+
+                                for (int j = 0; j < bf.getNumberOfChunks(); j++) {
+                                    gotChunk.set(false);
+
+                                    System.out.println("Restoring chunk " + j + "/" + bf.getNumberOfChunks() + "...");
+
+                                    try {
+                                        snd.sendMessage(new ChunkRestoreMessage(kAppVersion, bf.getId(), j));
+
+                                        dataRestoreThread.addObserver((Observable obj, Object arg) -> {
+                                            restoredChunks.add((String) arg);
+
+                                            gotChunk.set(true);
+                                        });
+                                    } catch (MessageSender.UnknownMessageException e) {
+                                        System.out.println("Unknown message discarded...");
+                                    }
+
+                                    for (int k = 0; k < 5 && !gotChunk.get(); k++)
+                                        Thread.sleep(1000);
+
+                                    if (!gotChunk.get())
+                                        throw new RestoreFailedException();
+
+                                    try {
+                                        Thread.sleep((long) (Math.random() * 400));
+                                    } catch (InterruptedException e) {
+                                        //  Ignoring.
+                                    }
+                                }
+
+                                RestoredFile f = new RestoredFile(restoredChunks);
+
+                                System.out.println("");
+                                System.out.println("Data acquired successfully.");
+
+                                while (true) {
+                                    try {
+                                        System.out.println("");
+                                        System.out.println("Save Path: ");
+
+                                        f.saveToDisk(reader.next());
+
+                                        break;
+                                    } catch (IOException exc) {
+                                        System.out.println("");
+                                        System.out.println("An error has occoured while saving the file.");
+
+                                        exc.printStackTrace();
+                                    }
+                                }
+                            } catch (RestoreFailedException e) {
+                                System.out.println("Unable to get chunk after 5 tries. Aborting...");
                             }
 
                             dataRestoreThread.terminate();
@@ -280,7 +359,7 @@ public class Main {
                         System.out.println("Use this interface to remove a number of chunks stored on your system in order to free up disk space.");
                         System.out.println("");
 
-                        System.out.println("Number of chunks to remove (0 to cancel):");
+                        System.out.print("Maximum number of chunks to remove (0 to cancel): ");
 
                         int choice = Integer.parseInt(reader.next());
 
@@ -296,9 +375,9 @@ public class Main {
                         else {
                             int i = 0;
 
-                            for (StoredFile sf : ds.getStoredDatabase().getStoredFiles()) {
+                            for (StoredFile sf : DataStorage.getInstance().getStoredDatabase().getStoredFiles()) {
                                 for (Integer chunk : sf.getChunksStored()) {
-                                    ds.removeChunk(sf.getId(), chunk);
+                                    DataStorage.getInstance().removeChunk(sf.getId(), chunk);
 
                                     try {
                                         snd.sendMessage(new SpaceReclaimMessage(kAppVersion, sf.getId(), chunk));
@@ -349,8 +428,18 @@ public class Main {
                 }
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+
+            if (controlChannelThread != null)
+                controlChannelThread.terminate();
+
+            if (dataBackupThread != null)
+                dataBackupThread.terminate();
+
+            System.out.println("Program exited abnormally.");
+
+            System.exit(0);
         }
     }
 }

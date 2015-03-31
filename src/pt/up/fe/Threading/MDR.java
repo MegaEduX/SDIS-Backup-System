@@ -6,8 +6,9 @@ import pt.up.fe.Networking.UDPMulticast;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.Observable;
 
-public class MDR implements Runnable {
+public class MDR extends Observable implements Runnable {
     private ProtocolController pc;
     private MessageReceiver rec;
 
@@ -33,6 +34,11 @@ public class MDR implements Runnable {
                 String outStr = new String(packet.getData(), 0, packet.getLength());
 
                 try {
+                    rec.addObserver((Observable obj, Object arg) -> {
+                        setChanged();
+                        notifyObservers(arg);
+                    });
+
                     rec.parseMessage(outStr);
                 } catch (IOException e) {
                     e.printStackTrace();

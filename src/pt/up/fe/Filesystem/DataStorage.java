@@ -55,6 +55,12 @@ public class DataStorage {
         _dataStorePath = path;
 
         try {
+            Files.createDirectory(Paths.get(path));
+        } catch (IOException exc) {
+
+        }
+
+        try {
             FileInputStream fis = new FileInputStream(appendPaths(_dataStorePath, kStoredDatabaseSerializedFileName));
             ObjectInputStream ois = new ObjectInputStream(fis);
 
@@ -62,8 +68,12 @@ public class DataStorage {
 
             ois.close();
             fis.close();
+
+            System.out.println("Loaded StoredDatabase from disk...");
         } catch (Exception e) {
             storedDatabase = new StoredDatabase();
+
+            System.out.println("Created a new StoredDatabase instance...");
         }
 
         try {
@@ -74,9 +84,15 @@ public class DataStorage {
 
             ois.close();
             fis.close();
+
+            System.out.println("Loaded BackedUpDatabase from disk...");
         } catch (Exception e) {
             backedUpDatabase = new BackedUpDatabase();
+
+            System.out.println("Created a new BackedUpDatabase instance...");
         }
+
+        System.out.println("");
     }
 
     //  Borrowed from http://stackoverflow.com/questions/711993/does-java-have-a-path-joining-method
@@ -99,7 +115,10 @@ public class DataStorage {
 
         java.io.File[] fileList = currentDir.listFiles();
 
-        Vector<String> chunks = new Vector<String>();
+        if (fileList == null)
+            return new Vector<>();
+
+        Vector<String> chunks = new Vector<>();
 
         for (java.io.File file : fileList)
             chunks.add(file.getName());
@@ -156,10 +175,10 @@ public class DataStorage {
         return Files.readAllBytes(path);
     }
 
-    public void synchronize() {
+    public void synchronize() throws IOException {
         //  Synchronize the data on RAM to the disk.
 
-        try {
+        {
             FileOutputStream fos = new FileOutputStream(appendPaths(_dataStorePath, kStoredDatabaseSerializedFileName));
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
@@ -167,11 +186,9 @@ public class DataStorage {
 
             oos.close();
             fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
-        try {
+        {
             FileOutputStream fos = new FileOutputStream(appendPaths(_dataStorePath, kBackedUpDatabaseSerializedFileName));
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
@@ -179,8 +196,6 @@ public class DataStorage {
 
             oos.close();
             fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 

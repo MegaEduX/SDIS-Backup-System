@@ -16,7 +16,7 @@ public class StoredDatabase extends Database implements Serializable {
     Vector<StoredFile> _files;
 
     public StoredDatabase() {
-        //  load();
+        _files = new Vector<>();
     }
 
     public Vector<StoredFile> getStoredFiles() {
@@ -40,33 +40,4 @@ public class StoredDatabase extends Database implements Serializable {
 
         _files.remove(f);
     }
-
-    /*  public void load() {
-        _files = new Vector<StoredFile>();
-
-        Vector<String> cl = DataStorage.getInstance().chunkList();
-
-        for (String chunk : cl) {
-            Vector<Integer> chunks = new Vector<Integer>();
-
-            String[] chunkDetails = chunk.split("-");
-
-            String fileId = chunkDetails[0];
-
-            chunks.add(Integer.parseInt(chunkDetails[1]));
-
-            cl.remove(chunk);
-
-            for (String innerChunk : cl) {
-                String[] splittedInnerChunk = innerChunk.split("-");
-
-                if (splittedInnerChunk[0].equals(fileId))
-                    chunks.add(Integer.parseInt(splittedInnerChunk[1]));
-
-                cl.remove(innerChunk);
-            }
-
-            _files.add(new StoredFile(fileId, chunks));
-        }
-    }   */
 }
