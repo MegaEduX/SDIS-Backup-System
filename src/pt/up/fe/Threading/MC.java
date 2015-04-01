@@ -23,6 +23,18 @@ public class MC implements Runnable {
     @Override public void run() {
         mcSocket = pc.getMCSocket();
 
+        try {
+            mcSocket.join();
+        } catch (IOException e) {
+            System.out.println("Multicast Join Failed.");
+
+            e.printStackTrace();
+
+            running = false;
+
+            return;
+        }
+
         while (true) {
             if (!running)
                 return;
@@ -43,9 +55,10 @@ public class MC implements Runnable {
         }
     }
 
-    public void terminate() {
+    public void terminate() throws IOException {
         running = false;
 
+        mcSocket.leave();
         mcSocket.close();
     }
 }

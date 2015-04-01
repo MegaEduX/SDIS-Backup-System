@@ -31,23 +31,25 @@ public class MessageSender {
     public void sendMessage(Message m) throws IOException, UnknownMessageException {
         String messageType = m.getHeader().split(" ")[0];
 
+        String outputMessage = new String(m.getMessageData(), "UTF-8");
+
         if (messageType.equals("PUTCHUNK"))
-            pc.getMDBSocket().send(m.toString());
+            pc.getMDBSocket().send(outputMessage);
 
         else if (messageType.equals("STORED"))
-            pc.getMCSocket().send(m.toString());
+            pc.getMCSocket().send(outputMessage);
 
         else if (messageType.equals("GETCHUNK"))
-            pc.getMCSocket().send(m.toString());
+            pc.getMCSocket().send(outputMessage);
 
         else if (messageType.equals("CHUNK"))
-            pc.getMDRSocket().send(m.toString());
+            pc.getMDRSocket().send(outputMessage);
 
         else if (messageType.equals("DELETE"))
-            pc.getMCSocket().send(m.toString());
+            pc.getMCSocket().send(outputMessage);
 
         else if (messageType.equals("REMOVED"))
-            pc.getMCSocket().send(m.toString());
+            pc.getMCSocket().send(outputMessage);
 
         else
             throw new UnknownMessageException();

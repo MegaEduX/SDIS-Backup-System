@@ -16,6 +16,8 @@ public class UDPMulticast {
         this.port = port;
 
         socket = new MulticastSocket(port);
+
+        socket.setLoopbackMode(false);  //  true to disable - WTF?!
     }
 
     public void join() throws IOException {

@@ -41,16 +41,25 @@ public class MessageReceiver extends Observable {
     //  TODO: The return of this function isn't specified well.
 
     public int parseMessage(String Message) throws IOException {
+        System.out.println("Got message: " + Message);
+
         String parsedMessage[] = Message.split(" ");
 
         //  Chunk Backup Protocol - PUTCHUNK <Version> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
 
         if (parsedMessage[0].equals(kMessageTypePutChunk)) {
-            String body = parsedMessage[5];
+            System.out.println("Got chunk.");
 
-            byte[] data = Arrays.copyOfRange(body.getBytes(Charset.forName("UTF-8")), 4, body.getBytes(Charset.forName("UTF-8")).length);
+            String[] dataStr = Arrays.copyOfRange(parsedMessage, 5, parsedMessage.length - 1);
 
-            if (DataStorage.getInstance().storeChunk(parsedMessage[1], Integer.parseInt(parsedMessage[2]),data)) {
+            StringBuffer res = new StringBuffer();
+
+            for (String s : dataStr)
+                res.append(s);
+
+            byte[] data = res.toString().getBytes();
+
+            if (DataStorage.getInstance().storeChunk(parsedMessage[1], Integer.parseInt(parsedMessage[2]), data)) {
                 ChunkBackupAnswerMessage msg = new ChunkBackupAnswerMessage(parsedMessage[1],
                         parsedMessage[2],
                         Integer.parseInt(parsedMessage[3]));
@@ -58,9 +67,8 @@ public class MessageReceiver extends Observable {
                 pc.getMCSocket().send(new String(msg.getMessageData(), "UTF-8"));
 
                 return PUTCHUNK_OK;
-            } else {
+            } else
                 return PUTCHUNK_FAIL;
-            }
         }
 
         //  STORED <Version> <FileId> <ChunkNo> <CRLF><CRLF>

@@ -23,6 +23,18 @@ public class MDB implements Runnable {
     @Override public void run() {
         mdbSocket = pc.getMDBSocket();
 
+        try {
+            mdbSocket.join();
+        } catch (IOException e) {
+            System.out.println("Multicast Join Failed.");
+
+            e.printStackTrace();
+
+            running = false;
+
+            return;
+        }
+
         while (true) {
             if (!running)
                 return;
@@ -43,9 +55,10 @@ public class MDB implements Runnable {
         }
     }
 
-    public void terminate() {
+    public void terminate() throws IOException {
         running = false;
 
+        mdbSocket.leave();
         mdbSocket.close();
     }
 }

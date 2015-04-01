@@ -24,7 +24,9 @@ public class BackedUpFile extends File {
         _path = pathToFile;
 
         _id = new String(generateFileId(), "UTF-8");
-        _numberOfChunks = (int)(File.getFileSizeInBytes(_path) / kChunkLengthInBytes);
+        _numberOfChunks = (int) Math.ceil((File.getFileSizeInBytes(_path) / (double) kChunkLengthInBytes));
+
+        System.out.println(File.getFileSizeInBytes(_path) + " " + kChunkLengthInBytes + " " + _numberOfChunks);
 
         Path file = Paths.get(_path);
         BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);

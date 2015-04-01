@@ -24,6 +24,18 @@ public class MDR extends Observable implements Runnable {
     @Override public void run() {
         mdrSocket = pc.getMDRSocket();
 
+        try {
+            mdrSocket.join();
+        } catch (IOException e) {
+            System.out.println("Multicast Join Failed.");
+
+            e.printStackTrace();
+
+            running = false;
+
+            return;
+        }
+
         while (true) {
             if (!running)
                 return;
@@ -49,9 +61,10 @@ public class MDR extends Observable implements Runnable {
         }
     }
 
-    public void terminate() {
+    public void terminate() throws IOException {
         running = false;
 
+        mdrSocket.leave();
         mdrSocket.close();
     }
 }

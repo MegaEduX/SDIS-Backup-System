@@ -432,10 +432,18 @@ public class Main {
             e.printStackTrace();
 
             if (controlChannelThread != null)
-                controlChannelThread.terminate();
+                try {
+                    controlChannelThread.terminate();
+                } catch (IOException exc) {
+
+                }
 
             if (dataBackupThread != null)
-                dataBackupThread.terminate();
+                try {
+                    dataBackupThread.terminate();
+                } catch (IOException exc) {
+
+                }
 
             System.out.println("Program exited abnormally.");
 
