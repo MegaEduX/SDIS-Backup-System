@@ -1,37 +1,41 @@
 package pt.up.fe.Filesystem;
 
+import com.sun.istack.internal.NotNull;
+import com.sun.istack.internal.Nullable;
+import pt.up.fe.Utilities.Security;
+
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  *      A file that is also backed up on other systems.
  */
 
-public class BackedUpFile extends File {
+public class BackedUpFile extends File implements Serializable {
     private String _path;
     private String _lastModified;
 
-    public BackedUpFile(String pathToFile) throws IOException {
+    public BackedUpFile(String pathToFile) throws IOException, NoSuchAlgorithmException {
         super();
 
         //  Get information about the file (just enough to generate an ID), generate an ID, then return the object.
 
         _path = pathToFile;
 
-        _id = new String(generateFileId(), "UTF-8");
+        _lastModified = Long.toString(new java.io.File(_path).lastModified());
+
+        _id = generateFileId();
+
         _numberOfChunks = (int) Math.ceil((File.getFileSizeInBytes(_path) / (double) kChunkLengthInBytes));
 
         System.out.println(File.getFileSizeInBytes(_path) + " " + kChunkLengthInBytes + " " + _numberOfChunks);
-
-        Path file = Paths.get(_path);
-        BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
-
-        _lastModified = attr.lastModifiedTime().toString();
     }
 
     public String getPath() {
@@ -42,18 +46,12 @@ public class BackedUpFile extends File {
         return _lastModified;
     }
 
-    private byte[] generateFileId() throws IOException {
+    @NotNull private String generateFileId() throws NoSuchAlgorithmException {
         String idBeforeSHA = _path + _lastModified;
 
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        System.out.println("idBeforeSha: " + idBeforeSHA);
 
-            return digest.digest(idBeforeSHA.getBytes("UTF-8"));
-        } catch (Exception e) {
-
-        }
-
-        return null;
+        return Security.hashSHA256(idBeforeSHA);
     }
 
     //  Borrowed some code from http://stackoverflow.com/questions/9588348/java-read-file-by-chunks
@@ -74,6 +72,4 @@ public class BackedUpFile extends File {
 
         return null;
     }
-
-
 }

@@ -46,7 +46,7 @@ public class MDB implements Runnable {
 
                 try {
                     rec.parseMessage(outStr);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             } catch (Exception e) {

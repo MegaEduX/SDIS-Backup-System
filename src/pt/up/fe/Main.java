@@ -53,8 +53,8 @@ public class Main {
 
         try {
 
-            /*  if (args.length != 6) {
-                System.out.println("Usage: project <MC Multicast IP Address> <MC Port> <MDB Multicast IP Address> <MDB Port> <MDR Multicast IP Address> <MDR Port>");
+            /*  if (args.length < 6) {
+                System.out.println("Usage: project <MC Multicast IP Address> <MC Port> <MDB Multicast IP Address> <MDB Port> <MDR Multicast IP Address> <MDR Port> (<Data Store Path>)");
 
                 return;
             }   */
@@ -71,11 +71,11 @@ public class Main {
 
             System.out.println(kAppName + " is running.");
 
-            System.out.println("");
+            //  System.out.println("");
 
             Scanner reader = new Scanner(System.in);
 
-            while (true) {
+            /*  while (true) {
                 try {
                     System.out.print("Data Store Path: ");
 
@@ -91,7 +91,10 @@ public class Main {
                     System.out.println("Unable to create system data. Please choose another directory.");
                     System.out.println("");
                 }
-            }
+            }   */
+
+            DataStorage.getInstance().setDataStorePath("/Users/MegaEduX/DataStorage");
+            DataStorage.getInstance().synchronize();
 
             //  final ProtocolController pc = new ProtocolController(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]), args[4], Integer.parseInt(args[5]));
 
@@ -157,11 +160,14 @@ public class Main {
                         BackedUpFile f;
 
                         try {
+                            if (Files.isDirectory(Paths.get(filePath)))
+                                throw new IOException();
+
                             f = new BackedUpFile(filePath);
+
+                            DataStorage.getInstance().getBackedUpDatabase().add(f);
                         } catch (IOException e) {
                             System.out.println("Unable to initiate a backup for the specified file.");
-
-                            //  e.printStackTrace();
 
                             continue;
                         }
@@ -176,6 +182,8 @@ public class Main {
                             ChunkBackupMessage m = new ChunkBackupMessage(kAppVersion, fileId, i, kReplicationDeg, f.getChunk(i));
 
                             for (int tries = 0; f.getReplicationCountForChunk(i) < kReplicationDeg && tries < kMaxTriesPerChunk; tries++) {
+                                System.out.println("Current replication count: " + f.getReplicationCountForChunk(i));
+
                                 try {
                                     snd.sendMessage(m);
                                 } catch (MessageSender.UnknownMessageException e) {

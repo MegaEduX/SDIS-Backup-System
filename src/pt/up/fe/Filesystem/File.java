@@ -1,13 +1,14 @@
 package pt.up.fe.Filesystem;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
-public class File {
-    static int kMinimumChunkReplicationCount = 5;
+public class File implements Serializable {
+    transient int kMinimumChunkReplicationCount = 5;
 
-    static int kChunkLengthInBytes = 64000;
+    transient static int kChunkLengthInBytes = 64000;
 
     HashMap<Integer, Integer> _replicationStatus;
 

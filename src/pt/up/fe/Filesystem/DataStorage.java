@@ -39,10 +39,6 @@ public class DataStorage {
             throw new IllegalStateException("Data Store wasn't instantiated!");
     }
 
-    /*  public String getDataStorePath() {
-        return _dataStorePath;
-    }   */
-
     public StoredDatabase getStoredDatabase() {
         return storedDatabase;
     }
@@ -129,7 +125,7 @@ public class DataStorage {
     public boolean chunkExists(String fileId, int chunkId) {
         _consistencyCheck();
 
-        java.io.File f = new java.io.File(chunkFileName(fileId, chunkId));
+        java.io.File f = new java.io.File(appendPaths(_dataStorePath, chunkFileName(fileId, chunkId)));
 
         return f.exists();
     }
@@ -137,11 +133,20 @@ public class DataStorage {
     public boolean storeChunk(String fileId, int chunkId, byte[] data) {
         _consistencyCheck();
 
+        if (chunkExists(fileId, chunkId))
+            return false;
+
         try {
-            FileOutputStream fos = new FileOutputStream(chunkFileName(fileId, chunkId));
+            FileOutputStream fos = new FileOutputStream(appendPaths(_dataStorePath, chunkFileName(fileId, chunkId)));
 
             fos.write(data);
             fos.close();
+
+            try {
+                synchronize();
+            } catch (IOException e) {
+                System.out.println("Database synchronization failed.");
+            }
 
             return true;
         } catch (Exception e) {
@@ -156,6 +161,12 @@ public class DataStorage {
 
         try {
             Files.delete(Paths.get(appendPaths(_dataStorePath, chunkFileName(fileId, chunkId))));
+
+            try {
+                synchronize();
+            } catch (IOException e) {
+                System.out.println("Database synchronization failed.");
+            }
 
             return true;
         } catch (IOException e) {
@@ -198,5 +209,4 @@ public class DataStorage {
             fos.close();
         }
     }
-
 }

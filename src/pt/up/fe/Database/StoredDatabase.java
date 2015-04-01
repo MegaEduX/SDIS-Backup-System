@@ -23,6 +23,21 @@ public class StoredDatabase extends Database implements Serializable {
         return _files;
     }
 
+    public boolean add(StoredFile f) {
+        try {
+            getFileWithChunkId(f.getId());
+
+            return false;
+        } catch (FileNotFoundException e) {
+            if (f == null)
+                return false;
+
+            _files.add(f);
+
+            return true;
+        }
+    }
+
     public StoredFile getFileWithChunkId(String cId) throws FileNotFoundException {
         for (StoredFile f : _files)
             if (f.getId().equals(cId))

@@ -52,7 +52,7 @@ public class MDR extends Observable implements Runnable {
                     });
 
                     rec.parseMessage(outStr);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             } catch (Exception e) {
