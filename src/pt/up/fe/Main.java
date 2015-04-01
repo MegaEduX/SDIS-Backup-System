@@ -314,7 +314,7 @@ public class Main {
                         int i = 0;
 
                         for (BackedUpFile bf : DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles())
-                            System.out.println("[" + ++i + "] " + bf.getPath() + " (" + bf.getLastModified() + ")");
+                            System.out.println("[" + ++i + "] " + bf.getPath() + " (" + bf.getId() + ")");
 
                         System.out.println("");
                         System.out.println("Showing " + i + " results.");
@@ -337,7 +337,7 @@ public class Main {
 
                             BackedUpFile bf = DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles().get(i - 1);
 
-                            System.out.println("Restoring " + bf.getPath() + "...");
+                            System.out.println("Deleting  " + bf.getPath() + "...");
 
                             try {
                                 Files.delete(Paths.get(bf.getPath()));

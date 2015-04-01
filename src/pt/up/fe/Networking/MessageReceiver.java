@@ -41,6 +41,8 @@ public class MessageReceiver extends Observable {
     public void parseMessage(String Message) throws IOException {
         String parsedMessage[] = Message.split(" ");
 
+        System.out.println("Received message.");
+
         //  Chunk Backup Protocol - PUTCHUNK <Version> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
 
         if (parsedMessage[0].equals(kMessageTypePutChunk)) {
@@ -62,6 +64,7 @@ public class MessageReceiver extends Observable {
                 try {
                     StoredFile f = DataStorage.getInstance().getStoredDatabase().getFileWithChunkId(parsedMessage[2]);
 
+                    f.setChunkStoredStatus(Integer.parseInt(parsedMessage[2]), true);
                     f.increaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
                 } catch (FileNotFoundException e) {
                     DataStorage.getInstance().getStoredDatabase().add(

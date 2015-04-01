@@ -21,4 +21,20 @@ public class StoredFile extends File implements Serializable {
     public Vector<Integer> getChunksStored() {
         return _chunksStored;
     }
+
+    public void setChunkStoredStatus(Integer chunk, boolean status) {
+        if (status) {
+            for (Integer i : _chunksStored)
+                if (chunk.equals(i))
+                    return;
+
+            _chunksStored.add(chunk);
+        } else
+            for (Integer i : _chunksStored)
+                if (chunk.equals(i)) {
+                    _chunksStored.remove(i);
+
+                    return;
+                }
+    }
 }
