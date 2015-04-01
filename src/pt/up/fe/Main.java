@@ -148,7 +148,18 @@ public class Main {
                 System.out.println("");
                 System.out.print("Choice: ");
 
-                switch (Integer.parseInt(reader.next())) {
+                int c;
+
+                try {
+                    c = Integer.parseInt(reader.next());
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input!");
+                    System.out.println("");
+
+                    continue;
+                }
+
+                switch (c) {
                     case 1: {
 
                         System.out.println("");
