@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
+import java.text.NumberFormat;
 import java.util.Observable;
 import java.util.Scanner;
 import java.util.Vector;
@@ -44,12 +45,12 @@ public class Main {
     public static final String kAppName = "##APP_NAME_HERE##";
     public static final String kAppVersion = "1.0";
 
-    public static final int kReplicationDeg = 5;
     public static final int kMaxTriesPerChunk = 5;
 
     public static void main(String[] args) {
         MC controlChannelThread = null;
         MDB dataBackupThread = null;
+        MDR dataRestoreThread = null;
 
         try {
 
@@ -129,7 +130,9 @@ public class Main {
 
              */
 
-            MDR dataRestoreThread = new MDR(pc, rec);
+            dataRestoreThread = new MDR(pc, rec);
+
+            new Thread(dataRestoreThread).start();
 
             //  Not started!
 
@@ -171,19 +174,36 @@ public class Main {
                         BackedUpFile f;
 
                         try {
-                            if (Files.isDirectory(Paths.get(filePath)))
+                            if (Files.isDirectory(Paths.get(filePath)) || !Files.exists(Paths.get(filePath)))
                                 throw new IOException();
 
                             f = new BackedUpFile(filePath);
 
                             DataStorage.getInstance().getBackedUpDatabase().add(f);
                         } catch (IOException e) {
-                            System.out.println("Unable to initiate a backup for the specified file.");
+                            System.out.println("");
+                            System.out.println("Unable to initiate a backup for the desired file.");
+                            System.out.println("");
 
                             continue;
                         }
 
                         String fileId = f.getId();
+
+                        System.out.print("Desired Replication Count (0 to cancel): ");
+
+                        int replicationCount;
+
+                        while (true) {
+                            try {
+                                replicationCount = reader.nextInt();
+
+                                break;
+                            } catch (NumberFormatException e) {
+                                System.out.println("");
+                                System.out.print("Invalid choice! Please retry: ");
+                            }
+                        }
 
                         System.out.println("");
 
@@ -192,15 +212,17 @@ public class Main {
 
                             //  TODO: Keep ipaddr:port from peers.
 
-                            ChunkBackupMessage m = new ChunkBackupMessage(kAppVersion, fileId, i, kReplicationDeg, f.getChunk(i));
+                            f.resetPeerList();
 
-                            for (int tries = 0; f.getReplicationCountForChunk(i) < kReplicationDeg && tries < kMaxTriesPerChunk; tries++) {
-                                System.out.println("Current replication count: " + f.getReplicationCountForChunk(i));
+                            ChunkBackupMessage m = new ChunkBackupMessage(kAppVersion, fileId, i, replicationCount, f.getChunk(i));
 
+                            for (int tries = 0; f.getPeerCount() < replicationCount && tries < kMaxTriesPerChunk; tries++) {
                                 try {
                                     snd.sendMessage(m);
                                 } catch (MessageSender.UnknownMessageException e) {
                                     System.out.println("Unknown message discarded...");
+                                } catch (Exception e) {
+                                    e.printStackTrace();
                                 }
 
                                 try {
@@ -209,6 +231,8 @@ public class Main {
                                     //  Ignoring.
                                 }
                             }
+
+                            f.setReplicationCountForChunk(i, f.getPeerCount());
                         }
 
                         System.out.println("Operation Complete.");
@@ -244,27 +268,29 @@ public class Main {
                         if (choice == 0)
                             continue;
                         else {
-                            new Thread(dataRestoreThread).start();
+                            dataRestoreThread.setActive(true);
 
-                            BackedUpFile bf = DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles().get(i - 1);
+                            BackedUpFile bf = DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles().get(choice - 1);
 
                             System.out.println("Restoring " + bf.getPath() + "...");
 
                             try {
-                                Vector<String> restoredChunks = new Vector<>();
+                                Vector<byte[]> restoredChunks = new Vector<>();
 
                                 AtomicBoolean gotChunk = new AtomicBoolean(false);   //  Eww.
 
                                 for (int j = 0; j < bf.getNumberOfChunks(); j++) {
                                     gotChunk.set(false);
 
-                                    System.out.println("Restoring chunk " + j + "/" + bf.getNumberOfChunks() + "...");
+                                    System.out.println("Restoring chunk " + (j + 1) + "/" + bf.getNumberOfChunks() + "...");
 
                                     try {
                                         snd.sendMessage(new ChunkRestoreMessage(kAppVersion, bf.getId(), j));
 
                                         dataRestoreThread.addObserver((Observable obj, Object arg) -> {
-                                            restoredChunks.add((String) arg);
+                                            restoredChunks.add((byte[]) arg);
+
+                                            System.out.println("Got a chunk!");
 
                                             gotChunk.set(true);
                                         });
@@ -273,7 +299,7 @@ public class Main {
                                     }
 
                                     for (int k = 0; k < 5 && !gotChunk.get(); k++)
-                                        Thread.sleep(1000);
+                                        Thread.sleep(1000 * (k + 1));
 
                                     if (!gotChunk.get())
                                         throw new RestoreFailedException();
@@ -293,9 +319,11 @@ public class Main {
                                 while (true) {
                                     try {
                                         System.out.println("");
-                                        System.out.println("Save Path: ");
+                                        System.out.print("Save Path: ");
 
                                         f.saveToDisk(reader.next());
+
+                                        System.out.println("");
 
                                         break;
                                     } catch (IOException exc) {
@@ -309,7 +337,7 @@ public class Main {
                                 System.out.println("Unable to get chunk after 5 tries. Aborting...");
                             }
 
-                            dataRestoreThread.terminate();
+                            dataRestoreThread.setActive(false);
                         }
 
                         break;
@@ -355,9 +383,7 @@ public class Main {
                             try {
                                 Files.delete(Paths.get(bf.getPath()));
                             } catch (NoSuchFileException e) {
-                                System.err.format("%s: no such" + " file or directory%n", bf.getPath());
-
-                                System.out.println("An error has occoured. Proceeding anyway...");
+                                //  That's fine.
                             } catch (IOException e) {
                                 System.out.println("An error has occoured. Proceeding anyway...");
                             }
@@ -398,7 +424,7 @@ public class Main {
 
                             for (StoredFile sf : DataStorage.getInstance().getStoredDatabase().getStoredFiles()) {
                                 for (Integer chunk : sf.getChunksStored()) {
-                                    DataStorage.getInstance().removeChunk(sf.getId(), chunk);
+                                    sf.removeChunk(chunk);
 
                                     try {
                                         snd.sendMessage(new SpaceReclaimMessage(kAppVersion, sf.getId(), chunk));
@@ -430,6 +456,7 @@ public class Main {
 
                         controlChannelThread.terminate();
                         dataBackupThread.terminate();
+                        dataRestoreThread.terminate();
 
                         System.out.println("Terminating...");
 
@@ -456,19 +483,28 @@ public class Main {
                 try {
                     controlChannelThread.terminate();
                 } catch (IOException exc) {
-
+                    System.out.println("An error has occoured while closing one of the auxiliary threads. Proceeding anyway...");
                 }
 
             if (dataBackupThread != null)
                 try {
                     dataBackupThread.terminate();
                 } catch (IOException exc) {
-
+                    System.out.println("An error has occoured while closing one of the auxiliary threads. Proceeding anyway...");
                 }
+
+            if (dataRestoreThread != null)
+                try {
+                    dataRestoreThread.terminate();
+                } catch (IOException exc) {
+                    System.out.println("An error has occoured while closing one of the auxiliary threads. Proceeding anyway...");
+                }
+
+            System.out.println();
 
             System.out.println("Program exited abnormally.");
 
-            System.exit(0);
+            System.exit(1);
         }
     }
 }

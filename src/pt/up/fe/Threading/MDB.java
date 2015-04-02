@@ -6,6 +6,7 @@ import pt.up.fe.Networking.UDPMulticast;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.Arrays;
 
 public class MDB implements Runnable {
     private ProtocolController pc;
@@ -42,10 +43,17 @@ public class MDB implements Runnable {
             try {
                 DatagramPacket packet = mdbSocket.receive();
 
-                String outStr = new String(packet.getData(), 0, packet.getLength());
+                if (!running)
+                    return;
 
                 try {
-                    rec.parseMessage(outStr);
+                    System.out.println("Got packet with length: " + packet.getLength());
+
+                    byte[] fixedArray = Arrays.copyOf(packet.getData(), packet.getLength());
+
+                    System.out.println("Fixed length to " + fixedArray.length);
+
+                    rec.parseRawMessageMDB(fixedArray);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

@@ -33,26 +33,41 @@ public class MessageSender {
 
         String outputMessage = new String(m.getMessageData(), "UTF-8");
 
-        if (messageType.equals("PUTCHUNK"))
-            pc.getMDBSocket().send(outputMessage);
+        switch (messageType) {
 
-        else if (messageType.equals("STORED"))
-            pc.getMCSocket().send(outputMessage);
+            case "PUTCHUNK":
+                pc.getMDBSocket().sendRaw(m.getMessageData());
 
-        else if (messageType.equals("GETCHUNK"))
-            pc.getMCSocket().send(outputMessage);
+                break;
 
-        else if (messageType.equals("CHUNK"))
-            pc.getMDRSocket().send(outputMessage);
+            case "STORED":
+                pc.getMCSocket().send(outputMessage);
 
-        else if (messageType.equals("DELETE"))
-            pc.getMCSocket().send(outputMessage);
+                break;
 
-        else if (messageType.equals("REMOVED"))
-            pc.getMCSocket().send(outputMessage);
+            case "GETCHUNK":
+                pc.getMCSocket().send(outputMessage);
 
-        else
-            throw new UnknownMessageException();
+                break;
 
+            case "CHUNK":
+                pc.getMDRSocket().send(outputMessage);
+
+                break;
+
+            case "DELETE":
+                pc.getMCSocket().send(outputMessage);
+
+                break;
+
+            case "REMOVED":
+                pc.getMCSocket().send(outputMessage);
+
+                break;
+
+            default:
+                throw new UnknownMessageException();
+
+        }
     }
 }

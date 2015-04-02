@@ -25,7 +25,7 @@ public class UDPMulticast {
     }
 
     public DatagramPacket receive() {
-        byte[] buf = new byte[256];
+        byte[] buf = new byte[72000];   //  More than enough, but we aren't RAM-constrained.
 
         DatagramPacket packet = new DatagramPacket(buf, buf.length);
 
@@ -47,6 +47,22 @@ public class UDPMulticast {
 
             return true;
         } catch (IOException e) {
+            e.printStackTrace();
+
+            return false;
+        }
+    }
+
+    public boolean sendRaw(byte[] buf) {
+        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
+
+        try {
+            socket.send(packet);
+
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+
             return false;
         }
     }

@@ -7,22 +7,19 @@ import pt.up.fe.Messaging.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.net.InetAddress;
 import java.util.Observable;
-import java.util.Vector;
 
 /**
  *      Maintains the receiving socket and parses incoming messages.
  */
 
 public class MessageReceiver extends Observable {
-    ProtocolController pc;
+    private ProtocolController pc = null;
+    private InetAddress sender = null;
 
-    private static final String kMessageTypePutChunk = "PUTCHUNK";
     private static final String kMessageTypeStored = "STORED";
     private static final String kMessageTypeGetChunk = "GETCHUNK";
-    private static final String kMessageTypeChunk = "CHUNK";
     private static final String kMessageTypeDelete = "DELETE";
     private static final String kMessageTypeRemoved = "REMOVED";
 
@@ -36,42 +33,68 @@ public class MessageReceiver extends Observable {
         System.arraycopy(a, del + 1, a, del, a.length - 1 - del);
     }
 
-    //  TODO: The return of this function isn't specified well.
+    public void setSender(InetAddress snd) {
+        sender = snd;
+    }
 
-    public void parseMessage(String Message) throws IOException {
-        String parsedMessage[] = Message.split(" ");
+    public void parseRawMessageMDR(byte[] message) throws IOException {
+        //  This is only called by the MDR.
 
-        System.out.println("Received message.");
+        //  CHUNK <Version> <FileId> <ChunkNo> <CRLF><CRLF><Body>
 
-        //  Chunk Backup Protocol - PUTCHUNK <Version> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
+        System.out.println("Chunk recover done.");
 
-        if (parsedMessage[0].equals(kMessageTypePutChunk)) {
-            String[] dataStr = Arrays.copyOfRange(parsedMessage, 5, parsedMessage.length - 1);
+        for (int i = 0; i < message.length; i++) {
+            if (message[i] == (byte)'\r' &&
+                    message[i + 1] == (byte)'\n' &&
+                    message[i + 2] == (byte)'\r' &&
+                    message[i + 3] == (byte)'\n') {
+                for (int j = 0; j <= i + 3; j++)
+                    removeElement(message, 0);
 
-            StringBuffer res = new StringBuffer();
+                break;
+            }
+        }
 
-            for (String s : dataStr) {
-                res.append(s);
-                res.append(" ");
+        setChanged();
+        notifyObservers(message);
+    }
+
+    public void parseRawMessageMDB(byte[] message) throws IOException {
+        //  This is only called by the MDB.
+
+        //  PUTCHUNK <Version> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
+
+        String parsedMessage[] = new String(message, "UTF-8").split(" ");
+
+        for (int i = 0; i < message.length; i++) {
+            if (message[i] == (byte)'\r' &&
+                    message[i + 1] == (byte)'\n' &&
+                    message[i + 2] == (byte)'\r' &&
+                    message[i + 3] == (byte)'\n') {
+                for (int j = 0; j <= i + 3; j++)
+                    removeElement(message, 0);
+
+                break;
+            }
+        }
+
+        if (DataStorage.getInstance().storeChunk(parsedMessage[2], Integer.parseInt(parsedMessage[3]), message)) {
+            StoredFile f = null;
+
+            try {
+                f = DataStorage.getInstance().getStoredDatabase().getFileWithChunkId(parsedMessage[2]);
+            } catch (FileNotFoundException e) {
+                f = new StoredFile(parsedMessage[2]);
+
+                DataStorage.getInstance().getStoredDatabase().add(f);
             }
 
-            String resStr = res.toString();
-
-            byte[] data = resStr.getBytes();
-
-            for (int i = 0; i < 4; i++)
-                removeElement(data, 0);
-
-            if (DataStorage.getInstance().storeChunk(parsedMessage[2], Integer.parseInt(parsedMessage[3]), data)) {
-                try {
-                    StoredFile f = DataStorage.getInstance().getStoredDatabase().getFileWithChunkId(parsedMessage[2]);
-
-                    f.setChunkStoredStatus(Integer.parseInt(parsedMessage[2]), true);
-                    f.increaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
-                } catch (FileNotFoundException e) {
-                    DataStorage.getInstance().getStoredDatabase().add(
-                            new StoredFile(parsedMessage[2], new Vector<>(Integer.parseInt(parsedMessage[3]))));
-                }
+            try {
+                f.setChunkStoredStatus(Integer.parseInt(parsedMessage[3]), true);
+                f.increaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
+            } catch (NumberFormatException e) {
+                System.out.println("Okay, we can't keep going like this... Is someone messing up with us?");
 
                 ChunkBackupAnswerMessage msg = new ChunkBackupAnswerMessage(parsedMessage[1],
                         parsedMessage[2],
@@ -79,13 +102,15 @@ public class MessageReceiver extends Observable {
 
                 pc.getMCSocket().send(new String(msg.getMessageData(), "UTF-8"));
             }
-
-            return;
         }
+    }
 
-        //  STORED <Version> <FileId> <ChunkNo> <CRLF><CRLF>
+    public void parseMessage(String Message) throws IOException {
+        String parsedMessage[] = Message.split(" ");
 
         if (parsedMessage[0].equals(kMessageTypeStored)) {
+            //  STORED <Version> <FileId> <ChunkNo> <CRLF><CRLF>
+
             System.out.println("STORED Confirmation Message Received.");
 
             try {
@@ -94,19 +119,15 @@ public class MessageReceiver extends Observable {
                         getFileWithChunkId(parsedMessage[2]);
 
                 f.increaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
+                f.addPeer(sender);
 
-                /*  System.out.println("Increased replication count for chunk " +
-                        Integer.parseInt(parsedMessage[3]) +
-                        " - current count: " +
-                        f.getReplicationCountForChunk(Integer.parseInt(parsedMessage[3]))); */
+                sender = null;
             } catch (FileNotFoundException e) {
                 System.out.println("File not found, proceeding anyway...");
             }
-        }
+        } else if (parsedMessage[0].equals(kMessageTypeGetChunk)) {
+            //  Chunk Restore Protocol - GETCHUNK <Version> <FileId> <ChunkNo> <CRLF><CRLF>
 
-        //  Chunk Restore Protocol - GETCHUNK <Version> <FileId> <ChunkNo> <CRLF><CRLF>
-
-        if (parsedMessage[0].equals(kMessageTypeGetChunk)) {
             System.out.println("Chunk recover requested.");
 
             ChunkRestoreAnswerMessage msg = new ChunkRestoreAnswerMessage(parsedMessage[1],
@@ -117,72 +138,52 @@ public class MessageReceiver extends Observable {
                     )
             );
 
-            pc.getMDRSocket().send(new String(msg.getMessageData(), "UTF-8"));
+            pc.getMDRSocket().sendRaw(msg.getMessageData());
+        } else if (parsedMessage[0].equals(kMessageTypeDelete)) {
+            //  File deletion Protocol - DELETE <Version> <FileId> <CRLF><CRLF>
 
-            //  return CHUNK_OK;
-
-            return;
-        }
-
-        //  CHUNK <Version> <FileId> <ChunkNo> <CRLF><CRLF><Body>
-
-        if (parsedMessage[0].equals(kMessageTypeChunk)) {
-            //  We should only receive this message if we are subscribed to the MDR.
-            //  So, if we receive it, we want it.
-
-            //  TODO: CHUNK - It would be useful if the return of this function returned the received chunk data... Or something.
-
-            System.out.println("Chunk recover done.");
-
-            String body = parsedMessage[parsedMessage.length - 1];
-
-            setChanged();
-            notifyObservers(body);
-
-            return;
-        }
-
-        //  File deletion Protocol - DELETE <Version> <FileId> <CRLF><CRLF>
-
-        if (parsedMessage[0].equals(kMessageTypeDelete)) {
             try {
                 DataStorage.getInstance().getStoredDatabase().removeFileWithChunkId(parsedMessage[2]);
-
-                //  return DELETE_OK;
-
-                return;
             } catch (FileNotFoundException e) {
                 System.out.println("Chunk not found, ignoring...");
             }
-
-            //  return ERROR;
-
-            return;
-        }
-
-        //  Space Reclaiming Protocol - REMOVED <Version> <FileId> <ChunkNo> <CRLF><CRLF>
-
-        if (parsedMessage[0].equals(kMessageTypeRemoved)) {
-            boolean removed = false;
+        } else if (parsedMessage[0].equals(kMessageTypeRemoved)) {
+            //  Space Reclaiming Protocol - REMOVED <Version> <FileId> <ChunkNo> <CRLF><CRLF>
 
             System.out.println("Updating local counter...");
 
             for (StoredFile f : DataStorage.getInstance().getStoredDatabase().getStoredFiles()) {
                 if (f.getId().equals(parsedMessage[2])) {
-                    f.decreaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
+                    int chunk = Integer.parseInt(parsedMessage[3]);
 
-                    removed = true;
+                    f.decreaseReplicationCountForChunk(chunk);
 
-                    break;
+                    if (f.chunkNeedsReplication(chunk)) {
+                        ChunkBackupMessage m = new ChunkBackupMessage("1.0",
+                                f.getId(),
+                                chunk,
+                                f.getDesiredReplicationCount(),
+                                DataStorage.getInstance().retrieveChunk(f.getId(), chunk)
+                        );
+
+                        for (int tries = 0; f.getReplicationCountForChunk(chunk) < f.getDesiredReplicationCount() && tries < 5; tries++) {
+                            System.out.println("Current replication count: " + f.getReplicationCountForChunk(chunk));
+
+                            try {
+                                pc.getMDBSocket().sendRaw(m.getMessageData());
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                            try {
+                                Thread.sleep((long) (Math.random() * 400));
+                            } catch (InterruptedException e) {
+                                //  Ignoring.
+                            }
+                        }
+                    }
                 }
             }
-
-            if (removed)
-                System.out.println("Decreased replication count for " + parsedMessage[2] + ".");
-            else
-                System.out.println("Unable to decrease replication count for " + parsedMessage[2] + ".");
-
-            return;
         }
     }
 }

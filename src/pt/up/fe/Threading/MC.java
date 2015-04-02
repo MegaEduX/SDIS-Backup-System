@@ -42,9 +42,13 @@ public class MC implements Runnable {
             try {
                 DatagramPacket packet = mcSocket.receive();
 
+                if (!running)
+                    return;
+
                 String outStr = new String(packet.getData(), 0, packet.getLength());
 
                 try {
+                    rec.setSender(packet.getAddress());
                     rec.parseMessage(outStr);
                 } catch (Exception e) {
                     e.printStackTrace();

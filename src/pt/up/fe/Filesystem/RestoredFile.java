@@ -13,17 +13,17 @@ import java.util.Vector;
  */
 
 public class RestoredFile extends File {
-    Vector<String> chunkData;
+    Vector<byte[]> chunkData;
 
-    public RestoredFile(Vector<String> chunks) {
+    public RestoredFile(Vector<byte[]> chunks) {
         chunkData = chunks;
     }
 
     public void saveToDisk(String path) throws IOException {
         byte[] data = new byte[]{};
 
-        for (String c : chunkData)
-            data = Message.concatByteArrays(data, c.getBytes("UTF-8"));
+        for (byte[] c : chunkData)
+            data = Message.concatByteArrays(data, c);
 
         Files.write(Paths.get(path), data);
     }

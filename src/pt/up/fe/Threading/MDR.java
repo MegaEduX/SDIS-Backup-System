@@ -6,6 +6,7 @@ import pt.up.fe.Networking.UDPMulticast;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.Arrays;
 import java.util.Observable;
 
 public class MDR extends Observable implements Runnable {
@@ -14,7 +15,7 @@ public class MDR extends Observable implements Runnable {
 
     private UDPMulticast mdrSocket;
 
-    volatile boolean running = true;
+    volatile boolean acceptPackets = true;
 
     public MDR(ProtocolController protocolController, MessageReceiver messageReceiver) {
         pc = protocolController;
@@ -31,19 +32,17 @@ public class MDR extends Observable implements Runnable {
 
             e.printStackTrace();
 
-            running = false;
+            acceptPackets = false;
 
             return;
         }
 
         while (true) {
-            if (!running)
-                return;
-
             try {
                 DatagramPacket packet = mdrSocket.receive();
 
-                String outStr = new String(packet.getData(), 0, packet.getLength());
+                if (!acceptPackets)
+                    continue;   //  Drop everything we don't need.
 
                 try {
                     rec.addObserver((Observable obj, Object arg) -> {
@@ -51,7 +50,13 @@ public class MDR extends Observable implements Runnable {
                         notifyObservers(arg);
                     });
 
-                    rec.parseMessage(outStr);
+                    System.out.println("Got packet with length: " + packet.getLength());
+
+                    byte[] fixedArray = Arrays.copyOf(packet.getData(), packet.getLength());
+
+                    System.out.println("Fixed length to " + fixedArray.length);
+
+                    rec.parseRawMessageMDR(fixedArray);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -61,8 +66,12 @@ public class MDR extends Observable implements Runnable {
         }
     }
 
+    public void setActive(boolean active) throws IOException {
+        acceptPackets = active;
+    }
+
     public void terminate() throws IOException {
-        running = false;
+        acceptPackets = false;
 
         mdrSocket.leave();
         mdrSocket.close();

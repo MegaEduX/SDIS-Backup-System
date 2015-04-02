@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Vector;
 
 public class File implements Serializable {
-    transient int kMinimumChunkReplicationCount = 5;
-
     transient static int kChunkLengthInBytes = 64000;
+
+    int desiredReplicationCount;
 
     HashMap<Integer, Integer> _replicationStatus;
 
@@ -59,6 +59,11 @@ public class File implements Serializable {
         return 0;
     }
 
+    public void setReplicationCountForChunk(int chunk, int count) {
+        _replicationStatus.remove(chunk);
+        _replicationStatus.put(chunk, count);
+    }
+
     public void increaseReplicationCountForChunk(int chunk) {
         int count = 0;
 
@@ -90,13 +95,15 @@ public class File implements Serializable {
         return true;
     }
 
-    public Vector<Integer> chunksNeedingReplication() {
-        Vector<Integer> chunks = new Vector<Integer>();
+    public boolean chunkNeedsReplication(int chunk) {
+        return _replicationStatus.get(chunk) < desiredReplicationCount;
+    }
 
-        for (Map.Entry<Integer, Integer> e : _replicationStatus.entrySet())
-            if (e.getValue() < kMinimumChunkReplicationCount)
-                chunks.add(e.getKey());
+    public int getDesiredReplicationCount() {
+        return desiredReplicationCount;
+    }
 
-        return chunks;
+    public void setDesiredReplicationCount(int c) {
+        desiredReplicationCount = c;
     }
 }

@@ -10,12 +10,12 @@ import java.util.Vector;
 public class StoredFile extends File implements Serializable {
     Vector<Integer> _chunksStored;
 
-    public StoredFile(String identifier, Vector<Integer> fileChunksStored) {
+    public StoredFile(String identifier) {
         super();
 
         _id = identifier;
-        _chunksStored = fileChunksStored;
-        _numberOfChunks = _chunksStored.size();
+        _chunksStored = new Vector<>();
+        _numberOfChunks = 0;
     }
 
     public Vector<Integer> getChunksStored() {
@@ -36,5 +36,12 @@ public class StoredFile extends File implements Serializable {
 
                     return;
                 }
+    }
+
+    public void removeChunk(Integer chunk) {
+        setChunkStoredStatus(chunk, false);
+        decreaseReplicationCountForChunk(chunk);
+
+        DataStorage.getInstance().removeChunk(_id, chunk);
     }
 }
