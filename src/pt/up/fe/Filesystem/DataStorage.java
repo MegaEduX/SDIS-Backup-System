@@ -53,7 +53,7 @@ public class DataStorage {
         try {
             Files.createDirectory(Paths.get(path));
         } catch (IOException exc) {
-
+            //  If it can't be created, it mostlikely already exists.
         }
 
         try {
@@ -64,12 +64,8 @@ public class DataStorage {
 
             ois.close();
             fis.close();
-
-            System.out.println("Loaded StoredDatabase from disk...");
         } catch (Exception e) {
             storedDatabase = new StoredDatabase();
-
-            System.out.println("Created a new StoredDatabase instance...");
         }
 
         try {
@@ -80,15 +76,9 @@ public class DataStorage {
 
             ois.close();
             fis.close();
-
-            System.out.println("Loaded BackedUpDatabase from disk...");
         } catch (Exception e) {
             backedUpDatabase = new BackedUpDatabase();
-
-            System.out.println("Created a new BackedUpDatabase instance...");
         }
-
-        System.out.println("");
     }
 
     //  Borrowed from http://stackoverflow.com/questions/711993/does-java-have-a-path-joining-method
@@ -170,10 +160,8 @@ public class DataStorage {
 
             return true;
         } catch (IOException e) {
-
+            return false;
         }
-
-        return false;
     }
 
     public byte[] retrieveChunk(String fileId, int chunkId) throws IOException {

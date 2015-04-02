@@ -78,8 +78,6 @@ public class BackedUpFile extends File implements Serializable {
 
             //  The chunk may need to be truncated here.
 
-            System.out.println("Bytes Read: " + bytesRead);
-
             return Arrays.copyOf(buffer, bytesRead);
         }
 

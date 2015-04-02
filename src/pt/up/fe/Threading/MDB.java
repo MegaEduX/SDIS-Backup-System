@@ -47,18 +47,12 @@ public class MDB implements Runnable {
                     return;
 
                 try {
-                    System.out.println("Got packet with length: " + packet.getLength());
-
-                    byte[] fixedArray = Arrays.copyOf(packet.getData(), packet.getLength());
-
-                    System.out.println("Fixed length to " + fixedArray.length);
-
-                    rec.parseRawMessageMDB(fixedArray);
+                    rec.parseRawMessageMDB(Arrays.copyOf(packet.getData(), packet.getLength()));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             } catch (Exception e) {
-
+                //  Ignore, proceed...
             }
         }
     }

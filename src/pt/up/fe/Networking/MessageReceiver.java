@@ -72,8 +72,6 @@ public class MessageReceiver extends Observable {
 
         String parsedMessage[] = new String(message, "UTF-8").split(" ");
 
-        System.out.println("(1) Message length: " + message.length);
-
         int bytesRemoved = 0;
 
         for (int i = 0; i < message.length; i++) {
@@ -89,8 +87,6 @@ public class MessageReceiver extends Observable {
         }
 
         message = Arrays.copyOf(message, message.length - bytesRemoved);
-
-        System.out.println("(2) Message length: " + message.length);
 
         if (DataStorage.getInstance().storeChunk(parsedMessage[2], Integer.parseInt(parsedMessage[3]), message)) {
             StoredFile f;
@@ -123,82 +119,86 @@ public class MessageReceiver extends Observable {
     public void parseMessage(String Message) throws IOException {
         String parsedMessage[] = Message.split(" ");
 
-        if (parsedMessage[0].equals(kMessageTypeStored)) {
-            //  STORED <Version> <FileId> <ChunkNo> <CRLF><CRLF>
+        switch (parsedMessage[0]) {
+            case kMessageTypeStored: {
+                try {
+                    BackedUpFile f = DataStorage.getInstance().
+                            getBackedUpDatabase().
+                            getFileWithChunkId(parsedMessage[2]);
 
-            System.out.println("STORED Confirmation Message Received.");
+                    f.increaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
+                    f.addPeer(sender);
 
-            try {
-                BackedUpFile f = DataStorage.getInstance().
-                        getBackedUpDatabase().
-                        getFileWithChunkId(parsedMessage[2]);
+                    sender = null;
+                } catch (FileNotFoundException e) {
+                    System.out.println("File not found, proceeding anyway...");
+                }
 
-                f.increaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
-                f.addPeer(sender);
-
-                sender = null;
-            } catch (FileNotFoundException e) {
-                System.out.println("File not found, proceeding anyway...");
+                break;
             }
-        } else if (parsedMessage[0].equals(kMessageTypeGetChunk)) {
-            //  Chunk Restore Protocol - GETCHUNK <Version> <FileId> <ChunkNo> <CRLF><CRLF>
 
-            System.out.println("Chunk recover requested.");
+            case kMessageTypeGetChunk: {
+                ChunkRestoreAnswerMessage msg = new ChunkRestoreAnswerMessage(parsedMessage[1],
+                        parsedMessage[2],
+                        Integer.parseInt(parsedMessage[3]),
+                        DataStorage.getInstance().retrieveChunk(parsedMessage[2],
+                                Integer.parseInt(parsedMessage[3])
+                        )
+                );
 
-            ChunkRestoreAnswerMessage msg = new ChunkRestoreAnswerMessage(parsedMessage[1],
-                    parsedMessage[2],
-                    Integer.parseInt(parsedMessage[3]),
-                    DataStorage.getInstance().retrieveChunk(parsedMessage[2],
-                            Integer.parseInt(parsedMessage[3])
-                    )
-            );
+                pc.getMDRSocket().sendRaw(msg.getMessageData());
 
-            pc.getMDRSocket().sendRaw(msg.getMessageData());
-        } else if (parsedMessage[0].equals(kMessageTypeDelete)) {
-            //  File deletion Protocol - DELETE <Version> <FileId> <CRLF><CRLF>
-
-            try {
-                DataStorage.getInstance().getStoredDatabase().removeFileWithChunkId(parsedMessage[2]);
-            } catch (FileNotFoundException e) {
-                System.out.println("Chunk not found, ignoring...");
+                break;
             }
-        } else if (parsedMessage[0].equals(kMessageTypeRemoved)) {
-            //  Space Reclaiming Protocol - REMOVED <Version> <FileId> <ChunkNo> <CRLF><CRLF>
 
-            System.out.println("Updating local counter...");
+            case kMessageTypeDelete: {
+                try {
+                    DataStorage.getInstance().getStoredDatabase().removeFileWithChunkId(parsedMessage[2]);
+                } catch (FileNotFoundException e) {
+                    System.out.println("Chunk not found, ignoring...");
+                }
 
-            for (StoredFile f : DataStorage.getInstance().getStoredDatabase().getStoredFiles()) {
-                if (f.getId().equals(parsedMessage[2])) {
-                    int chunk = Integer.parseInt(parsedMessage[3]);
+                break;
+            }
 
-                    f.decreaseReplicationCountForChunk(chunk);
+            case kMessageTypeRemoved: {
+                for (StoredFile f : DataStorage.getInstance().getStoredDatabase().getStoredFiles()) {
+                    if (f.getId().equals(parsedMessage[2])) {
+                        int chunk = Integer.parseInt(parsedMessage[3]);
 
-                    if (f.chunkNeedsReplication(chunk)) {
-                        ChunkBackupMessage m = new ChunkBackupMessage("1.0",
-                                f.getId(),
-                                chunk,
-                                f.getDesiredReplicationCount(),
-                                DataStorage.getInstance().retrieveChunk(f.getId(), chunk)
-                        );
+                        f.decreaseReplicationCountForChunk(chunk);
 
-                        for (int tries = 0; f.getReplicationCountForChunk(chunk) < f.getDesiredReplicationCount() && tries < 5; tries++) {
-                            System.out.println("Current replication count: " + f.getReplicationCountForChunk(chunk));
+                        if (f.chunkNeedsReplication(chunk)) {
+                            ChunkBackupMessage m = new ChunkBackupMessage("1.0",
+                                    f.getId(),
+                                    chunk,
+                                    f.getDesiredReplicationCount(),
+                                    DataStorage.getInstance().retrieveChunk(f.getId(), chunk)
+                            );
 
-                            try {
-                                pc.getMDBSocket().sendRaw(m.getMessageData());
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                            for (int tries = 0; f.getReplicationCountForChunk(chunk) < f.getDesiredReplicationCount() && tries < 5; tries++) {
+                                try {
+                                    pc.getMDBSocket().sendRaw(m.getMessageData());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
 
-                            try {
-                                Thread.sleep((long) (Math.random() * 400));
-                            } catch (InterruptedException e) {
-                                //  Ignoring.
+                                try {
+                                    Thread.sleep((long) (Math.random() * 400));
+                                } catch (InterruptedException e) {
+                                    //  Ignoring.
+                                }
                             }
                         }
                     }
                 }
+
+                break;
             }
+
+            default:
+
+                break;
         }
     }
 }

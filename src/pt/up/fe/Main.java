@@ -39,7 +39,7 @@ public class Main {
         }
     }
 
-    public static final String kAppName = "##APP_NAME_HERE##";
+    public static final String kAppName = "¯\\_(ツ)_/¯ Backupify";
     public static final String kAppVersion = "1.0";
 
     public static final int kMaxTriesPerChunk = 5;
@@ -51,11 +51,11 @@ public class Main {
 
         try {
 
-            /*  if (args.length < 6) {
-                System.out.println("Usage: project <MC Multicast IP Address> <MC Port> <MDB Multicast IP Address> <MDB Port> <MDR Multicast IP Address> <MDR Port> (<Data Store Path>)");
+            if (args.length != 6 && args.length != 7) {
+                System.out.println("Usage: java -jar Backupify.jar <MC Multicast IP Address> <MC Port> <MDB Multicast IP Address> <MDB Port> <MDR Multicast IP Address> <MDR Port> (<Data Store Path>)");
 
                 return;
-            }   */
+            }
 
             /*
 
@@ -69,34 +69,45 @@ public class Main {
 
             System.out.println(kAppName + " is running.");
 
-            //  System.out.println("");
-
             Scanner reader = new Scanner(System.in);
 
-            /*  while (true) {
+            if (args.length == 6) {
+                System.out.println("");
+
+                while (true) {
+                    try {
+                        System.out.print("Data Store Path: ");
+
+                        String path = reader.next();
+
+                        System.out.println("");
+
+                        DataStorage.getInstance().setDataStorePath(path);
+                        DataStorage.getInstance().synchronize();
+
+                        break;
+                    } catch (IOException exc) {
+                        System.out.println("Unable to create system data. Please choose another directory.");
+                        System.out.println("");
+                    }
+                }
+            } else {
                 try {
-                    System.out.print("Data Store Path: ");
-
-                    String path = reader.next();
-
-                    System.out.println("");
-
-                    DataStorage.getInstance().setDataStorePath(path);
+                    DataStorage.getInstance().setDataStorePath(args[6]);
                     DataStorage.getInstance().synchronize();
 
-                    break;
-                } catch (IOException exc) {
-                    System.out.println("Unable to create system data. Please choose another directory.");
                     System.out.println("");
+                } catch (IOException exc) {
+                    System.out.println("Invalid Data Store path.");
+
+                    System.exit(1);
                 }
-            }   */
 
-            DataStorage.getInstance().setDataStorePath("/Users/MegaEduX/DataStorage");
-            DataStorage.getInstance().synchronize();
+            }
 
-            //  final ProtocolController pc = new ProtocolController(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]), args[4], Integer.parseInt(args[5]));
+            final ProtocolController pc = new ProtocolController(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]), args[4], Integer.parseInt(args[5]));
 
-            final ProtocolController pc = new ProtocolController("224.1.1.1", 1234, "224.2.2.2", 2345, "224.3.3.3", 3456);
+            //  final ProtocolController pc = new ProtocolController("224.1.1.1", 1234, "224.2.2.2", 2345, "224.3.3.3", 3456);
 
             final MessageReceiver rec = new MessageReceiver(pc);
             final MessageSender snd = new MessageSender(pc);
@@ -144,6 +155,9 @@ public class Main {
                 System.out.println("[2] Restore File...");
                 System.out.println("[3] Remove Local (Backed Up) File...");
                 System.out.println("[4] Free Up Space (Remove Stored Chunks)...");
+
+                System.out.println("");
+
                 System.out.println("[0] Clean Up and Exit");
                 System.out.println("");
                 System.out.print("Choice: ");
@@ -226,7 +240,7 @@ public class Main {
                                     //  Ignoring.
                                 }
 
-                                System.out.println("Current Replication Count: " + f.getPeerCount());
+                                //  System.out.println("Current Replication Count: " + f.getPeerCount());
                             }
 
                             f.setReplicationCountForChunk(i, f.getPeerCount());
@@ -286,8 +300,6 @@ public class Main {
 
                                         dataRestoreThread.addObserver((Observable obj, Object arg) -> {
                                             restoredChunks.add((byte[]) arg);
-
-                                            System.out.println("Got a chunk!");
 
                                             gotChunk.set(true);
                                         });
