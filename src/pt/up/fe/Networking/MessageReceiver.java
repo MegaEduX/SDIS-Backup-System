@@ -50,15 +50,17 @@ public class MessageReceiver extends Observable {
 
             StringBuffer res = new StringBuffer();
 
-            for (String s : dataStr)
+            for (String s : dataStr) {
                 res.append(s);
+                res.append(" ");
+            }
 
-            byte[] data = res.toString().getBytes();
+            String resStr = res.toString();
+
+            byte[] data = resStr.getBytes();
 
             for (int i = 0; i < 4; i++)
                 removeElement(data, 0);
-
-            //  System.out.println("Storing chunk...");
 
             if (DataStorage.getInstance().storeChunk(parsedMessage[2], Integer.parseInt(parsedMessage[3]), data)) {
                 try {

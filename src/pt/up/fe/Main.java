@@ -190,6 +190,8 @@ public class Main {
                         for (int i = 0; i < f.getNumberOfChunks(); i++) {
                             System.out.println("Backing up chunk " + (i + 1) + "/" + f.getNumberOfChunks() + "...");    //  Peasants start counting at 1...
 
+                            //  TODO: Keep ipaddr:port from peers.
+
                             ChunkBackupMessage m = new ChunkBackupMessage(kAppVersion, fileId, i, kReplicationDeg, f.getChunk(i));
 
                             for (int tries = 0; f.getReplicationCountForChunk(i) < kReplicationDeg && tries < kMaxTriesPerChunk; tries++) {
