@@ -25,7 +25,7 @@ public class BackedUpFile extends File implements Serializable {
     private String _path;
     private String _lastModified;
 
-    transient private Vector<InetAddress> _peersWithFile;
+    transient private Vector<InetAddress> _peersWithFile = new Vector<>();
 
     public BackedUpFile(String pathToFile) throws IOException, NoSuchAlgorithmException {
         super();
@@ -77,6 +77,8 @@ public class BackedUpFile extends File implements Serializable {
             }
 
             //  The chunk may need to be truncated here.
+
+            System.out.println("Bytes Read: " + bytesRead);
 
             return Arrays.copyOf(buffer, bytesRead);
         }

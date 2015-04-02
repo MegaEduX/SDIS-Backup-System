@@ -4,18 +4,17 @@ import pt.up.fe.Messaging.Message;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Vector;
+import java.util.Set;
 
 /**
  *      A file that we just restored from other peers.
  */
 
 public class RestoredFile extends File {
-    Vector<byte[]> chunkData;
+    Set<byte[]> chunkData;
 
-    public RestoredFile(Vector<byte[]> chunks) {
+    public RestoredFile(Set<byte[]> chunks) {
         chunkData = chunks;
     }
 

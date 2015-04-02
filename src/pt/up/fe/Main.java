@@ -13,10 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
-import java.text.NumberFormat;
-import java.util.Observable;
-import java.util.Scanner;
-import java.util.Vector;
+import java.util.*;
 
 public class Main {
 
@@ -210,8 +207,6 @@ public class Main {
                         for (int i = 0; i < f.getNumberOfChunks(); i++) {
                             System.out.println("Backing up chunk " + (i + 1) + "/" + f.getNumberOfChunks() + "...");    //  Peasants start counting at 1...
 
-                            //  TODO: Keep ipaddr:port from peers.
-
                             f.resetPeerList();
 
                             ChunkBackupMessage m = new ChunkBackupMessage(kAppVersion, fileId, i, replicationCount, f.getChunk(i));
@@ -230,6 +225,8 @@ public class Main {
                                 } catch (InterruptedException e) {
                                     //  Ignoring.
                                 }
+
+                                System.out.println("Current Replication Count: " + f.getPeerCount());
                             }
 
                             f.setReplicationCountForChunk(i, f.getPeerCount());
@@ -275,7 +272,7 @@ public class Main {
                             System.out.println("Restoring " + bf.getPath() + "...");
 
                             try {
-                                Vector<byte[]> restoredChunks = new Vector<>();
+                                Set<byte[]> restoredChunks = new HashSet<>();
 
                                 AtomicBoolean gotChunk = new AtomicBoolean(false);   //  Eww.
 

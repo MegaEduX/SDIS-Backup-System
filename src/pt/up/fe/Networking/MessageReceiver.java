@@ -8,6 +8,7 @@ import pt.up.fe.Messaging.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Observable;
 
 /**
@@ -44,17 +45,21 @@ public class MessageReceiver extends Observable {
 
         System.out.println("Chunk recover done.");
 
+        int bytesRemoved = 0;
+
         for (int i = 0; i < message.length; i++) {
             if (message[i] == (byte)'\r' &&
                     message[i + 1] == (byte)'\n' &&
                     message[i + 2] == (byte)'\r' &&
                     message[i + 3] == (byte)'\n') {
-                for (int j = 0; j <= i + 3; j++)
+                for (int j = 0; j <= i + 3; j++, bytesRemoved++)
                     removeElement(message, 0);
 
                 break;
             }
         }
+
+        message = Arrays.copyOf(message, message.length - bytesRemoved);
 
         setChanged();
         notifyObservers(message);
@@ -67,20 +72,28 @@ public class MessageReceiver extends Observable {
 
         String parsedMessage[] = new String(message, "UTF-8").split(" ");
 
+        System.out.println("(1) Message length: " + message.length);
+
+        int bytesRemoved = 0;
+
         for (int i = 0; i < message.length; i++) {
             if (message[i] == (byte)'\r' &&
                     message[i + 1] == (byte)'\n' &&
                     message[i + 2] == (byte)'\r' &&
                     message[i + 3] == (byte)'\n') {
-                for (int j = 0; j <= i + 3; j++)
+                for (int j = 0; j <= i + 3; j++, bytesRemoved++)
                     removeElement(message, 0);
 
                 break;
             }
         }
 
+        message = Arrays.copyOf(message, message.length - bytesRemoved);
+
+        System.out.println("(2) Message length: " + message.length);
+
         if (DataStorage.getInstance().storeChunk(parsedMessage[2], Integer.parseInt(parsedMessage[3]), message)) {
-            StoredFile f = null;
+            StoredFile f;
 
             try {
                 f = DataStorage.getInstance().getStoredDatabase().getFileWithChunkId(parsedMessage[2]);
@@ -90,19 +103,21 @@ public class MessageReceiver extends Observable {
                 DataStorage.getInstance().getStoredDatabase().add(f);
             }
 
+            f.setDesiredReplicationCount(Integer.parseInt(parsedMessage[4]));
+
             try {
                 f.setChunkStoredStatus(Integer.parseInt(parsedMessage[3]), true);
                 f.increaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
             } catch (NumberFormatException e) {
                 System.out.println("Okay, we can't keep going like this... Is someone messing up with us?");
-
-                ChunkBackupAnswerMessage msg = new ChunkBackupAnswerMessage(parsedMessage[1],
-                        parsedMessage[2],
-                        Integer.parseInt(parsedMessage[3]));
-
-                pc.getMCSocket().send(new String(msg.getMessageData(), "UTF-8"));
             }
         }
+
+        ChunkBackupAnswerMessage msg = new ChunkBackupAnswerMessage(parsedMessage[1],
+                parsedMessage[2],
+                Integer.parseInt(parsedMessage[3]));
+
+        pc.getMCSocket().send(new String(msg.getMessageData(), "UTF-8"));
     }
 
     public void parseMessage(String Message) throws IOException {
