@@ -246,6 +246,7 @@ public class Main {
                             f.setReplicationCountForChunk(i, f.getPeerCount());
                         }
 
+                        System.out.println("");
                         System.out.println("Operation Complete.");
 
                         break;
@@ -283,6 +284,7 @@ public class Main {
 
                             BackedUpFile bf = DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles().get(choice - 1);
 
+                            System.out.println("");
                             System.out.println("Restoring " + bf.getPath() + "...");
 
                             try {
@@ -380,9 +382,11 @@ public class Main {
                             choice = Integer.parseInt(reader.next());
                         }
 
-                        if (choice == 0)
+                        if (choice == 0) {
+                            System.out.println("");
+
                             continue;
-                        else {
+                        } else {
                             new Thread(dataRestoreThread).start();
 
                             BackedUpFile bf = DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles().get(i - 1);
@@ -482,6 +486,8 @@ public class Main {
 
                         break;
                     }
+
+                    System.out.println("");
                 }
             }
 

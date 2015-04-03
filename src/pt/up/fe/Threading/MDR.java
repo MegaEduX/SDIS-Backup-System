@@ -50,11 +50,7 @@ public class MDR extends Observable implements Runnable {
                         notifyObservers(arg);
                     });
 
-                    System.out.println("Got packet with length: " + packet.getLength());
-
                     byte[] fixedArray = Arrays.copyOf(packet.getData(), packet.getLength());
-
-                    System.out.println("Fixed length to " + fixedArray.length);
 
                     rec.parseRawMessageMDR(fixedArray);
                 } catch (Exception e) {

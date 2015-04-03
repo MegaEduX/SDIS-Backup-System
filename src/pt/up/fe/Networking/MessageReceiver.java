@@ -43,8 +43,6 @@ public class MessageReceiver extends Observable {
 
         //  CHUNK <Version> <FileId> <ChunkNo> <CRLF><CRLF><Body>
 
-        System.out.println("Chunk recover done.");
-
         int bytesRemoved = 0;
 
         for (int i = 0; i < message.length; i++) {
@@ -138,15 +136,19 @@ public class MessageReceiver extends Observable {
             }
 
             case kMessageTypeGetChunk: {
-                ChunkRestoreAnswerMessage msg = new ChunkRestoreAnswerMessage(parsedMessage[1],
-                        parsedMessage[2],
-                        Integer.parseInt(parsedMessage[3]),
-                        DataStorage.getInstance().retrieveChunk(parsedMessage[2],
-                                Integer.parseInt(parsedMessage[3])
-                        )
-                );
+                try {
+                    ChunkRestoreAnswerMessage msg = new ChunkRestoreAnswerMessage(parsedMessage[1],
+                            parsedMessage[2],
+                            Integer.parseInt(parsedMessage[3]),
+                            DataStorage.getInstance().retrieveChunk(parsedMessage[2],
+                                    Integer.parseInt(parsedMessage[3])
+                            )
+                    );
 
-                pc.getMDRSocket().sendRaw(msg.getMessageData());
+                    pc.getMDRSocket().sendRaw(msg.getMessageData());
+                } catch (IOException e) {
+                    //  We don't have the file. :(
+                }
 
                 break;
             }

@@ -40,8 +40,6 @@ public class BackedUpFile extends File implements Serializable {
 
         _numberOfChunks = (int) Math.ceil((File.getFileSizeInBytes(_path) / (double) kChunkLengthInBytes));
 
-        System.out.println(File.getFileSizeInBytes(_path) + " " + kChunkLengthInBytes + " " + _numberOfChunks);
-
         _peersWithFile = new Vector<>();
     }
 
