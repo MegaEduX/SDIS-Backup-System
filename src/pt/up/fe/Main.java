@@ -486,9 +486,9 @@ public class Main {
 
                         break;
                     }
-
-                    System.out.println("");
                 }
+
+                System.out.println("");
             }
 
         } catch (Exception e) {
