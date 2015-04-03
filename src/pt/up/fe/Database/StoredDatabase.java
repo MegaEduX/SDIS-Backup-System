@@ -3,7 +3,6 @@ package pt.up.fe.Database;
 import pt.up.fe.Filesystem.DataStorage;
 import pt.up.fe.Filesystem.StoredFile;
 
-import javax.xml.crypto.Data;
 import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.Vector;
@@ -13,7 +12,7 @@ import java.util.Vector;
  */
 
 public class StoredDatabase extends Database implements Serializable {
-    Vector<StoredFile> _files;
+    private Vector<StoredFile> _files;
 
     public StoredDatabase() {
         _files = new Vector<>();
@@ -25,20 +24,17 @@ public class StoredDatabase extends Database implements Serializable {
 
     public boolean add(StoredFile f) {
         try {
-            getFileWithChunkId(f.getId());
+            getFileWithId(f.getId());
 
             return false;
         } catch (FileNotFoundException e) {
-            if (f == null)
-                return false;
-
             _files.add(f);
 
             return true;
         }
     }
 
-    public StoredFile getFileWithChunkId(String cId) throws FileNotFoundException {
+    public StoredFile getFileWithId(String cId) throws FileNotFoundException {
         for (StoredFile f : _files)
             if (f.getId().equals(cId))
                 return f;
@@ -46,8 +42,8 @@ public class StoredDatabase extends Database implements Serializable {
         throw new FileNotFoundException();
     }
 
-    public void removeFileWithChunkId(String cId) throws FileNotFoundException {
-        StoredFile f = getFileWithChunkId(cId);
+    public void removeFileWithId(String cId) throws FileNotFoundException {
+        StoredFile f = getFileWithId(cId);
 
         for (int i = 0; i < f.getNumberOfChunks(); i++) {
             DataStorage.getInstance().removeChunk(cId, i);

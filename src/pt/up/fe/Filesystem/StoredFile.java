@@ -8,7 +8,7 @@ import java.util.Vector;
  */
 
 public class StoredFile extends File implements Serializable {
-    Vector<Integer> _chunksStored;
+    private Vector<Integer> _chunksStored;
 
     public StoredFile(String identifier) {
         super();

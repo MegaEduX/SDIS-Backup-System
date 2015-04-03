@@ -3,7 +3,9 @@ package pt.up.fe.Networking;
 import pt.up.fe.Filesystem.BackedUpFile;
 import pt.up.fe.Filesystem.DataStorage;
 import pt.up.fe.Filesystem.StoredFile;
-import pt.up.fe.Messaging.*;
+import pt.up.fe.Messaging.ChunkBackupAnswerMessage;
+import pt.up.fe.Messaging.ChunkBackupMessage;
+import pt.up.fe.Messaging.ChunkRestoreAnswerMessage;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -98,7 +100,7 @@ public class MessageReceiver extends Observable {
             StoredFile f;
 
             try {
-                f = DataStorage.getInstance().getStoredDatabase().getFileWithChunkId(parsedMessage[2]);
+                f = DataStorage.getInstance().getStoredDatabase().getFileWithId(parsedMessage[2]);
             } catch (FileNotFoundException e) {
                 f = new StoredFile(parsedMessage[2]);
 
@@ -163,7 +165,7 @@ public class MessageReceiver extends Observable {
 
             case kMessageTypeDelete: {
                 try {
-                    DataStorage.getInstance().getStoredDatabase().removeFileWithChunkId(parsedMessage[2]);
+                    DataStorage.getInstance().getStoredDatabase().removeFileWithId(parsedMessage[2]);
                 } catch (FileNotFoundException e) {
                     System.out.println("Chunk not found, ignoring...");
                 }

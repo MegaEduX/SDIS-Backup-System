@@ -11,7 +11,7 @@ import java.util.Vector;
  */
 
 public class BackedUpDatabase implements Serializable {
-    Vector<BackedUpFile> _files;
+    private Vector<BackedUpFile> _files;
 
     public BackedUpDatabase() {
         _files = new Vector<>();
