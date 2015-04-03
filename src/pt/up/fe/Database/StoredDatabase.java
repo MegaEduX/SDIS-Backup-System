@@ -1,6 +1,5 @@
 package pt.up.fe.Database;
 
-import pt.up.fe.Filesystem.DataStorage;
 import pt.up.fe.Filesystem.StoredFile;
 
 import java.io.FileNotFoundException;
@@ -45,9 +44,7 @@ public class StoredDatabase extends Database implements Serializable {
     public void removeFileWithId(String cId) throws FileNotFoundException {
         StoredFile f = getFileWithId(cId);
 
-        for (int i = 0; i < f.getNumberOfChunks(); i++) {
-            DataStorage.getInstance().removeChunk(cId, i);
-        }
+        f.removeAllChunks();
 
         _files.remove(f);
     }

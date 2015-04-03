@@ -44,4 +44,9 @@ public class StoredFile extends File implements Serializable {
 
         DataStorage.getInstance().removeChunk(_id, chunk);
     }
+
+    public void removeAllChunks() {
+        for (int i = _chunksStored.size() - 1; i > -1; i--)
+            removeChunk(i);
+    }
 }

@@ -139,7 +139,7 @@ public class MessageReceiver extends Observable {
 
                     sender = null;
                 } catch (FileNotFoundException e) {
-                    System.out.println("File not found, proceeding anyway...");
+                    //  File not found, proceeding anyway...
                 }
 
                 break;
@@ -167,7 +167,7 @@ public class MessageReceiver extends Observable {
                 try {
                     DataStorage.getInstance().getStoredDatabase().removeFileWithId(parsedMessage[2]);
                 } catch (FileNotFoundException e) {
-                    System.out.println("Chunk not found, ignoring...");
+                    //  Chunk not found, probably we don't have it. Let's just ignore and proceed.
                 }
 
                 break;

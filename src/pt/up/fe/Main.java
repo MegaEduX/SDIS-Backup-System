@@ -1,8 +1,12 @@
 package pt.up.fe;
 
-import com.sun.corba.se.spi.orb.Operation;
-import pt.up.fe.Filesystem.*;
-import pt.up.fe.Messaging.*;
+import pt.up.fe.Filesystem.BackedUpFile;
+import pt.up.fe.Filesystem.DataStorage;
+import pt.up.fe.Filesystem.RestoredFile;
+import pt.up.fe.Filesystem.StoredFile;
+import pt.up.fe.Messaging.ChunkBackupMessage;
+import pt.up.fe.Messaging.ChunkRestoreMessage;
+import pt.up.fe.Messaging.FileDeletionMessage;
 import pt.up.fe.Networking.MessageReceiver;
 import pt.up.fe.Networking.MessageSender;
 import pt.up.fe.Networking.ProtocolController;
@@ -14,7 +18,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Observable;
+import java.util.Scanner;
+import java.util.Set;
 
 public class Main {
 
@@ -263,6 +270,14 @@ public class Main {
 
                     case 2: {
 
+                        if (DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles().size() == 0) {
+                            System.out.println("");
+                            System.out.println("There are no backed up files.");
+                            System.out.println("");
+
+                            continue;
+                        }
+
                         System.out.println("");
                         System.out.println("Backed Up File List:");
                         System.out.println("");
@@ -277,13 +292,23 @@ public class Main {
                         System.out.println("");
                         System.out.print("Which file do you wish to restore? (0 to cancel): ");
 
-                        int choice = Integer.parseInt(reader.next());
+                        int choice = -1;
+
+                        try {
+                            choice = Integer.parseInt(reader.next());
+                        } catch (NumberFormatException e) {
+                            //  Entering while...
+                        }
 
                         while (choice > i || choice < 0) {
                             System.out.println("");
                             System.out.print("Invalid choice. Please retry: ");
 
-                            choice = Integer.parseInt(reader.next());
+                            try {
+                                choice = Integer.parseInt(reader.next());
+                            } catch (NumberFormatException e) {
+                                //  Let's just continue.
+                            }
                         }
 
                         if (choice == 0)
