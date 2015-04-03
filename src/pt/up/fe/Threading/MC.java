@@ -6,6 +6,7 @@ import pt.up.fe.Networking.UDPMulticast;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.SocketException;
 
 public class MC implements Runnable {
     private ProtocolController pc;
@@ -25,6 +26,8 @@ public class MC implements Runnable {
 
         try {
             mcSocket.join();
+        } catch (SocketException e) {
+            //  We have, mostlikely, already joined it.
         } catch (IOException e) {
             System.out.println("Multicast Join Failed.");
 

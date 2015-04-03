@@ -6,6 +6,7 @@ import pt.up.fe.Networking.UDPMulticast;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.SocketException;
 import java.util.Arrays;
 import java.util.Observable;
 
@@ -27,6 +28,8 @@ public class MDR extends Observable implements Runnable {
 
         try {
             mdrSocket.join();
+        } catch (SocketException e) {
+            //  We have, mostlikely, already joined it.
         } catch (IOException e) {
             System.out.println("Multicast Join Failed.");
 

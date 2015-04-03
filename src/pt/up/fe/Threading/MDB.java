@@ -6,6 +6,7 @@ import pt.up.fe.Networking.UDPMulticast;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.SocketException;
 import java.util.Arrays;
 
 public class MDB implements Runnable {
@@ -26,6 +27,8 @@ public class MDB implements Runnable {
 
         try {
             mdbSocket.join();
+        } catch (SocketException e) {
+            //  We have, mostlikely, already joined it.
         } catch (IOException e) {
             System.out.println("Multicast Join Failed.");
 

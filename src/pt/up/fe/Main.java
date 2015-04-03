@@ -1,5 +1,6 @@
 package pt.up.fe;
 
+import com.sun.corba.se.spi.orb.Operation;
 import pt.up.fe.Filesystem.*;
 import pt.up.fe.Messaging.*;
 import pt.up.fe.Networking.MessageReceiver;
@@ -35,6 +36,12 @@ public class Main {
 
     private static class RestoreFailedException extends Exception {
         public RestoreFailedException() {
+            super();
+        }
+    }
+
+    public static class OperationCompleteException extends Exception {
+        public OperationCompleteException() {
             super();
         }
     }
@@ -219,7 +226,7 @@ public class Main {
                         System.out.println("");
 
                         for (int i = 0; i < f.getNumberOfChunks(); i++) {
-                            System.out.println("Backing up chunk " + (i + 1) + "/" + f.getNumberOfChunks() + "...");    //  Peasants start counting at 1...
+                            System.out.print("Backing up chunk " + (i + 1) + "/" + f.getNumberOfChunks() + "...");    //  Peasants start counting at 1...
 
                             f.resetPeerList();
 
@@ -244,6 +251,8 @@ public class Main {
                             }
 
                             f.setReplicationCountForChunk(i, f.getPeerCount());
+
+                            System.out.println(" - Replication Count " + f.getPeerCount() + "/" + replicationCount + ".");
                         }
 
                         System.out.println("");
@@ -435,27 +444,40 @@ public class Main {
                         else {
                             int i = 0;
 
-                            for (StoredFile sf : DataStorage.getInstance().getStoredDatabase().getStoredFiles()) {
-                                for (Integer chunk : sf.getChunksStored()) {
-                                    sf.removeChunk(chunk);
+                            try {
+                                while (i < choice) {
+                                    int maxRepCount = 0;
 
-                                    try {
-                                        snd.sendMessage(new SpaceReclaimMessage(kAppVersion, sf.getId(), chunk));
-                                    } catch (MessageSender.UnknownMessageException e) {
-                                        System.out.println("Unknown Message Type - this is an internal inconsistency error.");
+                                    for (StoredFile sf : DataStorage.getInstance().getStoredDatabase().getStoredFiles())
+                                        for (Integer chunk : sf.getChunksStored())
+                                            if (maxRepCount < sf.getReplicationCountForChunk(chunk))
+                                                maxRepCount = sf.getReplicationCountForChunk(chunk);
+
+                                    for (StoredFile sf : DataStorage.getInstance().getStoredDatabase().getStoredFiles()) {
+                                        for (int j = sf.getChunksStored().size() - 1; j > -1; j--) {
+                                            int chunkId = sf.getChunksStored().get(j);
+
+                                            if (sf.getReplicationCountForChunk(chunkId) == maxRepCount) {
+                                                sf.removeChunk(chunkId);
+
+                                                i++;
+                                            }
+
+                                            if (i == choice)
+                                                throw new OperationCompleteException();
+                                        }
+
+                                        if (i == choice)
+                                            throw new OperationCompleteException();
                                     }
 
-                                    i++;
-
-                                    if (i == choice)
-                                        break;
+                                    if (maxRepCount == 0)
+                                        throw new OperationCompleteException();
                                 }
 
-                                if (i == choice)
-                                    break;
+                            } catch (OperationCompleteException e) {
+                                System.out.println("Operation Complete. Removed " + i + " chunks.");
                             }
-
-                            System.out.println("Operation Complete. Removed " + i + " chunks.");
                         }
 
                         break;

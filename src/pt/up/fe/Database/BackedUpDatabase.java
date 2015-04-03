@@ -21,7 +21,7 @@ public class BackedUpDatabase implements Serializable {
         return _files;
     }
 
-    public BackedUpFile getFileWithChunkId(String cId) throws FileNotFoundException {
+    public BackedUpFile getFileWithId(String cId) throws FileNotFoundException {
         for (BackedUpFile f : _files)
             if (f.getId().equals(cId))
                 return f;

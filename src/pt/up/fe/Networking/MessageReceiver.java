@@ -70,6 +70,14 @@ public class MessageReceiver extends Observable {
 
         String parsedMessage[] = new String(message, "UTF-8").split(" ");
 
+        try {
+            DataStorage.getInstance().getBackedUpDatabase().getFileWithId(parsedMessage[2]);
+
+            return;     //  We are the owner of this file - it makes no sense at all to back it up too.
+        } catch (FileNotFoundException e) {
+            //  All good.
+        }
+
         int bytesRemoved = 0;
 
         for (int i = 0; i < message.length; i++) {
@@ -122,7 +130,7 @@ public class MessageReceiver extends Observable {
                 try {
                     BackedUpFile f = DataStorage.getInstance().
                             getBackedUpDatabase().
-                            getFileWithChunkId(parsedMessage[2]);
+                            getFileWithId(parsedMessage[2]);
 
                     f.increaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
                     f.addPeer(sender);
