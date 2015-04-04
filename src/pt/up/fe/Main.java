@@ -520,6 +520,10 @@ public class Main {
                         dataBackupThread.terminate();
                         dataRestoreThread.terminate();
 
+                        System.out.println("Synchronizing data...");
+
+                        DataStorage.getInstance().synchronize();
+
                         System.out.println("Terminating...");
 
                         System.exit(0);

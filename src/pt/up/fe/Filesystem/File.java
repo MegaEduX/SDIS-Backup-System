@@ -1,22 +1,26 @@
 package pt.up.fe.Filesystem;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Vector;
 
 public class File implements Serializable {
-    transient static int kChunkLengthInBytes = 64000;
+    transient protected static int kChunkLengthInBytes = 64000;
+    transient private Vector<InetAddress> _peersWithFile = new Vector<>();
 
-    int desiredReplicationCount;
+    transient boolean _refrainFromStartingBackup;
 
-    HashMap<Integer, Integer> _replicationStatus;
+    private int desiredReplicationCount;
 
-    String _id;
-    int _numberOfChunks;
+    private HashMap<Integer, Integer> _replicationStatus;
+
+    protected String _id;
+    protected int _numberOfChunks;
 
     public File() {
         _replicationStatus = new HashMap<>();
+        _refrainFromStartingBackup = false;
     }
 
     //  Borrowed from http://www.java2s.com/Code/Java/File-Input-Output/GetFileSizeInMB.htm
@@ -105,5 +109,28 @@ public class File implements Serializable {
 
     public void setDesiredReplicationCount(int c) {
         desiredReplicationCount = c;
+    }
+
+    public void resetPeerList() {
+        _peersWithFile = new Vector<>();
+    }
+
+    public void addPeer(InetAddress peer) {
+        if (_peersWithFile.contains(peer))
+            return;
+
+        _peersWithFile.add(peer);
+    }
+
+    public int getPeerCount() {
+        return _peersWithFile.size();
+    }
+
+    public void setRefrainFromStartingPropagation(boolean setting) {
+        _refrainFromStartingBackup = setting;
+    }
+
+    public boolean getRefrainFromStartingPropagation() {
+        return _refrainFromStartingBackup;
     }
 }

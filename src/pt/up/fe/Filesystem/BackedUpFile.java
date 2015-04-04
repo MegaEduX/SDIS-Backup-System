@@ -1,21 +1,13 @@
 package pt.up.fe.Filesystem;
 
 import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
 import pt.up.fe.Utilities.Security;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Vector;
 
 /**
  *      A file that is also backed up on other systems.
@@ -24,8 +16,6 @@ import java.util.Vector;
 public class BackedUpFile extends File implements Serializable {
     private String _path;
     private String _lastModified;
-
-    transient private Vector<InetAddress> _peersWithFile = new Vector<>();
 
     public BackedUpFile(String pathToFile) throws IOException, NoSuchAlgorithmException {
         super();
@@ -39,8 +29,6 @@ public class BackedUpFile extends File implements Serializable {
         _id = generateFileId();
 
         _numberOfChunks = (int) Math.ceil((File.getFileSizeInBytes(_path) / (double) kChunkLengthInBytes));
-
-        _peersWithFile = new Vector<>();
     }
 
     public String getPath() {
@@ -80,20 +68,5 @@ public class BackedUpFile extends File implements Serializable {
         }
 
         return null;
-    }
-
-    public void resetPeerList() {
-        _peersWithFile = new Vector<>();
-    }
-
-    public void addPeer(InetAddress peer) {
-        if (_peersWithFile.contains(peer))
-            return;
-
-        _peersWithFile.add(peer);
-    }
-
-    public int getPeerCount() {
-        return _peersWithFile.size();
     }
 }

@@ -46,7 +46,7 @@ public class StoredFile extends File implements Serializable {
     }
 
     public void removeAllChunks() {
-        for (int i = _chunksStored.size() - 1; i > -1; i--)
-            removeChunk(i);
+        while (_chunksStored.size() != 0)
+            removeChunk(_chunksStored.get(_chunksStored.size() - 1));
     }
 }
