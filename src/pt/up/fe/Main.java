@@ -7,6 +7,7 @@ import pt.up.fe.Filesystem.StoredFile;
 import pt.up.fe.Messaging.ChunkBackupMessage;
 import pt.up.fe.Messaging.ChunkRestoreMessage;
 import pt.up.fe.Messaging.FileDeletionMessage;
+import pt.up.fe.Messaging.SpaceReclaimMessage;
 import pt.up.fe.Networking.MessageReceiver;
 import pt.up.fe.Networking.MessageSender;
 import pt.up.fe.Networking.ProtocolController;
@@ -53,11 +54,6 @@ public class Main {
         }
     }
 
-    public static final String kAppName = "¯\\_(ツ)_/¯ Backupify";
-    public static final String kAppVersion = "1.0";
-
-    public static final int kMaxTriesPerChunk = 5;
-
     public static void main(String[] args) {
         MC controlChannelThread = null;
         MDB dataBackupThread = null;
@@ -81,7 +77,7 @@ public class Main {
 
              */
 
-            System.out.println(kAppName + " is running.");
+            System.out.println(Globals.AppName + " is running.");
 
             Scanner reader = new Scanner(System.in);
 
@@ -237,9 +233,9 @@ public class Main {
 
                             f.resetPeerList();
 
-                            ChunkBackupMessage m = new ChunkBackupMessage(kAppVersion, fileId, i, replicationCount, f.getChunk(i));
+                            ChunkBackupMessage m = new ChunkBackupMessage(Globals.AppVersion, fileId, i, replicationCount, f.getChunk(i));
 
-                            for (int tries = 0; f.getPeerCount() < replicationCount && tries < kMaxTriesPerChunk; tries++) {
+                            for (int tries = 0; f.getPeerCount() < replicationCount && tries < Globals.MaxTriesPerChunk; tries++) {
                                 try {
                                     snd.sendMessage(m);
                                 } catch (MessageSender.UnknownMessageException e) {
@@ -329,10 +325,12 @@ public class Main {
                                 for (int j = 0; j < bf.getNumberOfChunks(); j++) {
                                     gotChunk.set(false);
 
+                                    dataRestoreThread.cleanUp();
+
                                     System.out.println("Restoring chunk " + (j + 1) + "/" + bf.getNumberOfChunks() + "...");
 
                                     try {
-                                        snd.sendMessage(new ChunkRestoreMessage(kAppVersion, bf.getId(), j));
+                                        snd.sendMessage(new ChunkRestoreMessage(Globals.AppVersion, bf.getId(), j));
 
                                         dataRestoreThread.addObserver((Observable obj, Object arg) -> {
                                             restoredChunks.add((byte[]) arg);
@@ -436,7 +434,9 @@ public class Main {
                             }
 
                             try {
-                                snd.sendMessage(new FileDeletionMessage(kAppVersion, bf.getId()));
+                                snd.sendMessage(new FileDeletionMessage(Globals.AppVersion, bf.getId()));
+
+                                DataStorage.getInstance().getBackedUpDatabase().remove(bf);
                             } catch (MessageSender.UnknownMessageException e) {
                                 System.out.println("Unknown Message Type - this is an internal inconsistency error.");
                             }
@@ -484,6 +484,8 @@ public class Main {
 
                                             if (sf.getReplicationCountForChunk(chunkId) == maxRepCount) {
                                                 sf.removeChunk(chunkId);
+
+                                                snd.sendMessage(new SpaceReclaimMessage(Globals.AppVersion, sf.getId(), chunkId));
 
                                                 i++;
                                             }

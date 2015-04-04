@@ -36,4 +36,8 @@ public class BackedUpDatabase implements Serializable {
 
         return _files.add(f);
     }
+
+    public boolean remove(BackedUpFile f) {
+        return _files.remove(f);
+    }
 }

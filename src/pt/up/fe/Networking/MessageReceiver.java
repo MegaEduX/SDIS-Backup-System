@@ -3,6 +3,7 @@ package pt.up.fe.Networking;
 import pt.up.fe.Filesystem.BackedUpFile;
 import pt.up.fe.Filesystem.DataStorage;
 import pt.up.fe.Filesystem.StoredFile;
+import pt.up.fe.Globals;
 import pt.up.fe.Messaging.ChunkBackupAnswerMessage;
 import pt.up.fe.Messaging.ChunkBackupMessage;
 import pt.up.fe.Messaging.ChunkRestoreAnswerMessage;
@@ -20,6 +21,8 @@ import java.util.Observable;
 public class MessageReceiver extends Observable {
     private ProtocolController pc = null;
     private InetAddress sender = null;
+
+    private static final String kAppVersion = "1.0";
 
     private static final String kMessageTypeStored = "STORED";
     private static final String kMessageTypeGetChunk = "GETCHUNK";
@@ -181,7 +184,7 @@ public class MessageReceiver extends Observable {
                         f.decreaseReplicationCountForChunk(chunk);
 
                         if (f.chunkNeedsReplication(chunk)) {
-                            ChunkBackupMessage m = new ChunkBackupMessage("1.0",
+                            ChunkBackupMessage m = new ChunkBackupMessage(Globals.AppVersion,
                                     f.getId(),
                                     chunk,
                                     f.getDesiredReplicationCount(),

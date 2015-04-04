@@ -65,6 +65,15 @@ public class MDR extends Observable implements Runnable {
         }
     }
 
+    public void cleanUp() {
+        try {
+            mdrSocket.leave();
+            mdrSocket.join();
+        } catch (IOException e) {
+            System.out.println("Oops.");
+        }
+    }
+
     public void setActive(boolean active) throws IOException {
         acceptPackets = active;
     }
