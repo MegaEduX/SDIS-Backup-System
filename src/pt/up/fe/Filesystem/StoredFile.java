@@ -1,5 +1,6 @@
 package pt.up.fe.Filesystem;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Vector;
 
@@ -48,5 +49,10 @@ public class StoredFile extends File implements Serializable {
     public void removeAllChunks() {
         while (_chunksStored.size() != 0)
             removeChunk(_chunksStored.get(_chunksStored.size() - 1));
+    }
+
+    @Override
+    public byte[] getChunk(int chunkId) throws IOException {
+        return DataStorage.getInstance().retrieveChunk(_id, chunkId);
     }
 }

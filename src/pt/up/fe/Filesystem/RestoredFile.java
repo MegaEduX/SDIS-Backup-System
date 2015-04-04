@@ -5,24 +5,24 @@ import pt.up.fe.Messaging.Message;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Set;
+import java.util.HashMap;
 
 /**
  *      A file that we just restored from other peers.
  */
 
 public class RestoredFile extends File {
-    Set<byte[]> chunkData;
+    HashMap<Integer, byte[]> chunkData;
 
-    public RestoredFile(Set<byte[]> chunks) {
+    public RestoredFile(HashMap<Integer, byte[]> chunks) {
         chunkData = chunks;
     }
 
     public void saveToDisk(String path) throws IOException {
         byte[] data = new byte[]{};
 
-        for (byte[] c : chunkData)
-            data = Message.concatByteArrays(data, c);
+        for (int i = 0; chunkData.containsKey(i); i++)
+            data = Message.concatByteArrays(data, chunkData.get(i));
 
         Files.write(Paths.get(path), data);
     }

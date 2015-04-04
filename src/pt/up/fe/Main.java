@@ -4,10 +4,7 @@ import pt.up.fe.Filesystem.BackedUpFile;
 import pt.up.fe.Filesystem.DataStorage;
 import pt.up.fe.Filesystem.RestoredFile;
 import pt.up.fe.Filesystem.StoredFile;
-import pt.up.fe.Messaging.ChunkBackupMessage;
-import pt.up.fe.Messaging.ChunkRestoreMessage;
-import pt.up.fe.Messaging.FileDeletionMessage;
-import pt.up.fe.Messaging.SpaceReclaimMessage;
+import pt.up.fe.Messaging.*;
 import pt.up.fe.Networking.MessageReceiver;
 import pt.up.fe.Networking.MessageSender;
 import pt.up.fe.Networking.ProtocolController;
@@ -19,10 +16,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Observable;
 import java.util.Scanner;
-import java.util.Set;
 
 public class Main {
 
@@ -318,7 +314,7 @@ public class Main {
                             System.out.println("Restoring " + bf.getPath() + "...");
 
                             try {
-                                Set<byte[]> restoredChunks = new HashSet<>();
+                                HashMap<Integer, byte[]> restoredChunks = new HashMap<>();
 
                                 AtomicBoolean gotChunk = new AtomicBoolean(false);   //  Eww.
 
@@ -333,9 +329,13 @@ public class Main {
                                         snd.sendMessage(new ChunkRestoreMessage(Globals.AppVersion, bf.getId(), j));
 
                                         dataRestoreThread.addObserver((Observable obj, Object arg) -> {
-                                            restoredChunks.add((byte[]) arg);
+                                            ChunkRestoreAnswerMessage answer = (ChunkRestoreAnswerMessage) arg;
 
-                                            gotChunk.set(true);
+                                            if (answer.getId().equals(bf.getId()) && !restoredChunks.containsKey(answer.getChunkNo())) {
+                                                restoredChunks.put(answer.getChunkNo(), (byte[]) arg);
+
+                                                gotChunk.set(true);
+                                            }
                                         });
                                     } catch (MessageSender.UnknownMessageException e) {
                                         System.out.println("Unknown message discarded...");

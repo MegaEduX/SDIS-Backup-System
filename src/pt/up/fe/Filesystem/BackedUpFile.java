@@ -47,6 +47,7 @@ public class BackedUpFile extends File implements Serializable {
 
     //  Borrowed some code from http://stackoverflow.com/questions/9588348/java-read-file-by-chunks
 
+    @Override
     public byte[] getChunk(int chunkId) throws IOException {
         byte[] buffer = new byte[kChunkLengthInBytes];
         FileInputStream in = new FileInputStream(_path);

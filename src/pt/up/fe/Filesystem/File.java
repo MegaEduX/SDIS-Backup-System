@@ -1,5 +1,6 @@
 package pt.up.fe.Filesystem;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.HashMap;
@@ -126,11 +127,27 @@ public class File implements Serializable {
         return _peersWithFile.size();
     }
 
-    public void setRefrainFromStartingPropagation(boolean setting) {
-        _refrainFromStartingBackup = setting;
+    public void refrainFromStartingPropagation() {
+        _refrainFromStartingBackup = true;
+
+        new Thread() {
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+
+                }
+
+                _refrainFromStartingBackup = false;
+            }
+        }.start();
     }
 
     public boolean getRefrainFromStartingPropagation() {
         return _refrainFromStartingBackup;
+    }
+
+    public byte[] getChunk(int chunkId) throws IOException {
+        throw new IOException();
     }
 }

@@ -49,6 +49,8 @@ public class MessageReceiver extends Observable {
 
         //  CHUNK <Version> <FileId> <ChunkNo> <CRLF><CRLF><Body>
 
+        String parsedMessage[] = new String(message, "UTF-8").split(" ");
+
         int bytesRemoved = 0;
 
         for (int i = 0; i < message.length; i++) {
@@ -65,8 +67,10 @@ public class MessageReceiver extends Observable {
 
         message = Arrays.copyOf(message, message.length - bytesRemoved);
 
+        ChunkRestoreAnswerMessage ram = new ChunkRestoreAnswerMessage(parsedMessage[1], parsedMessage[2], Integer.parseInt(parsedMessage[3]), message);
+
         setChanged();
-        notifyObservers(message);
+        notifyObservers(ram);
     }
 
     public void parseRawMessageMDB(byte[] message) throws IOException {
@@ -77,7 +81,9 @@ public class MessageReceiver extends Observable {
         String parsedMessage[] = new String(message, "UTF-8").split(" ");
 
         try {
-            DataStorage.getInstance().getBackedUpDatabase().getFileWithId(parsedMessage[2]);
+            File f = DataStorage.getInstance().getBackedUpDatabase().getFileWithId(parsedMessage[2]);
+
+            f.refrainFromStartingPropagation();
 
             return;     //  We are the owner of this file - it makes no sense at all to back it up too.
         } catch (FileNotFoundException e) {
@@ -111,6 +117,7 @@ public class MessageReceiver extends Observable {
                 DataStorage.getInstance().getStoredDatabase().add(f);
             }
 
+            f.refrainFromStartingPropagation();
             f.setDesiredReplicationCount(Integer.parseInt(parsedMessage[4]));
 
             try {
@@ -197,7 +204,7 @@ public class MessageReceiver extends Observable {
                     if (file.chunkNeedsReplication(chunk)) {
                         //  this won't work.
 
-                        //  file.setRefrainFromStartingPropagation();
+                        //  file.refrainFromStartingPropagation();
 
                         try {
                             Thread.sleep((long) Math.random() * 400);
@@ -213,57 +220,24 @@ public class MessageReceiver extends Observable {
 
                             file.resetPeerList();
 
-                            ChunkBackupMessage m = new ChunkBackupMessage(Globals.AppVersion, file.getId(), i, file.getDesiredReplicationCount(), file.getChunk(i));    //  TODO: implement getchunk to be subclassed!
+                            ChunkBackupMessage m = new ChunkBackupMessage(Globals.AppVersion,
+                                    file.getId(),
+                                    i,
+                                    file.getDesiredReplicationCount(),
+                                    file.getChunk(i));
 
-                            for (int tries = 0; f.getPeerCount() < replicationCount && tries < Globals.MaxTriesPerChunk; tries++) {
-                                try {
-                                    snd.sendMessage(m);
-                                } catch (MessageSender.UnknownMessageException e) {
-                                    System.out.println("Unknown message discarded...");
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
+                            for (int tries = 0;
+                                 file.getPeerCount() < file.getReplicationCountForChunk(i) && tries < Globals.MaxTriesPerChunk;
+                                 tries++) {
+                                pc.getMDBSocket().sendRaw(m.getMessageData());
 
                                 try {
                                     Thread.sleep((long) (Math.random() * 400));
                                 } catch (InterruptedException e) {
                                     //  Ignoring.
                                 }
-
-                                //  System.out.println("Current Replication Count: " + f.getPeerCount());
-                            }
-
-                            f.setReplicationCountForChunk(i, f.getPeerCount());
-
-                            System.out.println(" - Replication Count " + f.getPeerCount() + "/" + replicationCount + ".");
-                        }
-
-                        ChunkBackupMessage m = new ChunkBackupMessage(Globals.AppVersion,
-                                file.getId(),
-                                chunk,
-                                file.getDesiredReplicationCount(),
-                                DataStorage.getInstance().retrieveChunk(f.getId(), chunk)
-                        );
-
-                        for (int tries = 0; file.getReplicationCountForChunk(chunk) < file.getDesiredReplicationCount() && tries < 5; tries++) {
-                            try {
-                                pc.getMDBSocket().sendRaw(m.getMessageData());
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-                            try {
-                                Thread.sleep((long) (Math.random() * 400));
-                            } catch (InterruptedException e) {
-                                //  Ignoring.
                             }
                         }
-                    }
-                }
-
-                for (StoredFile f : DataStorage.getInstance().getStoredDatabase().getStoredFiles()) {
-                    if (f.getId().equals(parsedMessage[2])) {
-
                     }
                 }
 
