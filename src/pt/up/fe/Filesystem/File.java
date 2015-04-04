@@ -58,10 +58,8 @@ public class File implements Serializable {
         try {
             return _replicationStatus.get(chunk);
         } catch (Exception e) {
-
+            return 0;
         }
-
-        return 0;
     }
 
     public void setReplicationCountForChunk(int chunk, int count) {
@@ -75,7 +73,7 @@ public class File implements Serializable {
         try {
             count = _replicationStatus.get(chunk);
         } catch (Exception e) {
-
+            //  If it doesn't exist, it's zero.
         }
 
         _replicationStatus.remove(chunk);
@@ -88,7 +86,7 @@ public class File implements Serializable {
         try {
             count = _replicationStatus.get(chunk);
         } catch (Exception e) {
-
+            //  If it doesn't exist, it's zero.
         }
 
         if (count < 1)
@@ -117,8 +115,12 @@ public class File implements Serializable {
     }
 
     public void addPeer(InetAddress peer) {
-        if (_peersWithFile.contains(peer))
-            return;
+        try {
+            if (_peersWithFile.contains(peer))
+                return;
+        } catch (NullPointerException e) {
+            resetPeerList();
+        }
 
         _peersWithFile.add(peer);
     }
@@ -135,7 +137,7 @@ public class File implements Serializable {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-
+                    //  Eh.
                 }
 
                 _refrainFromStartingBackup = false;

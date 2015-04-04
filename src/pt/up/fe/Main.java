@@ -113,8 +113,6 @@ public class Main {
 
             final ProtocolController pc = new ProtocolController(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]), args[4], Integer.parseInt(args[5]));
 
-            //  final ProtocolController pc = new ProtocolController("224.1.1.1", 1234, "224.2.2.2", 2345, "224.3.3.3", 3456);
-
             final MessageReceiver rec = new MessageReceiver(pc);
             final MessageSender snd = new MessageSender(pc);
 
@@ -188,15 +186,17 @@ public class Main {
 
                         String filePath = reader.next();
 
-                        BackedUpFile f;
+                        String id;
 
                         try {
                             if (Files.isDirectory(Paths.get(filePath)) || !Files.exists(Paths.get(filePath)))
                                 throw new IOException();
 
-                            f = new BackedUpFile(filePath);
+                            BackedUpFile f = new BackedUpFile(filePath);
 
                             DataStorage.getInstance().getBackedUpDatabase().add(f);
+
+                            id = f.getId();
                         } catch (IOException e) {
                             System.out.println("");
                             System.out.println("Unable to initiate a backup for the desired file.");
@@ -204,6 +204,8 @@ public class Main {
 
                             continue;
                         }
+
+                        BackedUpFile f = DataStorage.getInstance().getBackedUpDatabase().getFileWithId(id);     //  I am aware this may not make much sense. But on JVM's eyes... It does.
 
                         String fileId = f.getId();
 
@@ -221,6 +223,8 @@ public class Main {
                                 System.out.print("Invalid choice! Please retry: ");
                             }
                         }
+
+                        f.setDesiredReplicationCount(replicationCount);
 
                         System.out.println("");
 
@@ -245,8 +249,6 @@ public class Main {
                                 } catch (InterruptedException e) {
                                     //  Ignoring.
                                 }
-
-                                //  System.out.println("Current Replication Count: " + f.getPeerCount());
                             }
 
                             f.setReplicationCountForChunk(i, f.getPeerCount());
@@ -303,9 +305,11 @@ public class Main {
                             }
                         }
 
-                        if (choice == 0)
+                        if (choice == 0) {
+                            System.out.println("");
+
                             continue;
-                        else {
+                        } else {
                             dataRestoreThread.setActive(true);
 
                             BackedUpFile bf = DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles().get(choice - 1);
@@ -325,24 +329,26 @@ public class Main {
 
                                     System.out.println("Restoring chunk " + (j + 1) + "/" + bf.getNumberOfChunks() + "...");
 
-                                    try {
-                                        snd.sendMessage(new ChunkRestoreMessage(Globals.AppVersion, bf.getId(), j));
+                                    for (int k = 0; k < 5 && !gotChunk.get(); k++) {
+                                        try {
+                                            snd.sendMessage(new ChunkRestoreMessage(Globals.AppVersion, bf.getId(), j));
 
-                                        dataRestoreThread.addObserver((Observable obj, Object arg) -> {
-                                            ChunkRestoreAnswerMessage answer = (ChunkRestoreAnswerMessage) arg;
+                                            dataRestoreThread.addObserver((Observable obj, Object arg) -> {
+                                                ChunkRestoreAnswerMessage answer = (ChunkRestoreAnswerMessage) arg;
 
-                                            if (answer.getId().equals(bf.getId()) && !restoredChunks.containsKey(answer.getChunkNo())) {
-                                                restoredChunks.put(answer.getChunkNo(), (byte[]) arg);
+                                                if (answer.getId().equals(bf.getId()) && !restoredChunks.containsKey(answer.getChunkNo())) {
+                                                    restoredChunks.put(answer.getChunkNo(), answer.getRawData());
 
-                                                gotChunk.set(true);
-                                            }
-                                        });
-                                    } catch (MessageSender.UnknownMessageException e) {
-                                        System.out.println("Unknown message discarded...");
+                                                    gotChunk.set(true);
+                                                }
+                                            });
+                                        } catch (MessageSender.UnknownMessageException e) {
+                                            System.out.println("Unknown message discarded...");
+                                        }
+
+                                        if (!gotChunk.get())
+                                            Thread.sleep(1000 * (k + 1));
                                     }
-
-                                    for (int k = 0; k < 5 && !gotChunk.get(); k++)
-                                        Thread.sleep(1000 * (k + 1));
 
                                     if (!gotChunk.get())
                                         throw new RestoreFailedException();
@@ -365,8 +371,6 @@ public class Main {
                                         System.out.print("Save Path: ");
 
                                         f.saveToDisk(reader.next());
-
-                                        System.out.println("");
 
                                         break;
                                     } catch (IOException exc) {
@@ -391,6 +395,13 @@ public class Main {
                         System.out.println("");
                         System.out.println("Use this interface to remove a file from your file system and from peers who have it backed up.");
                         System.out.println("");
+
+                        if (DataStorage.getInstance().getBackedUpDatabase().getBackedUpFiles().size() == 0) {
+                            System.out.println("There are no files backed up.");
+                            System.out.println("");
+
+                            continue;
+                        }
 
                         System.out.println("Backed Up File List:");
                         System.out.println("");

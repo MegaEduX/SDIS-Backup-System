@@ -132,6 +132,12 @@ public class MessageReceiver extends Observable {
                 parsedMessage[2],
                 Integer.parseInt(parsedMessage[3]));
 
+        try {
+            Thread.sleep((long) (Math.random() * 400));
+        } catch (InterruptedException e) {
+            //  Eh.
+        }
+
         pc.getMCSocket().send(new String(msg.getMessageData(), "UTF-8"));
     }
 
@@ -145,7 +151,6 @@ public class MessageReceiver extends Observable {
                             getBackedUpDatabase().
                             getFileWithId(parsedMessage[2]);
 
-                    f.increaseReplicationCountForChunk(Integer.parseInt(parsedMessage[3]));
                     f.addPeer(sender);
 
                     sender = null;
@@ -202,22 +207,16 @@ public class MessageReceiver extends Observable {
                     file.decreaseReplicationCountForChunk(chunk);
 
                     if (file.chunkNeedsReplication(chunk)) {
-                        //  this won't work.
-
-                        //  file.refrainFromStartingPropagation();
-
                         try {
-                            Thread.sleep((long) Math.random() * 400);
+                            Thread.sleep((long) (Math.random() * 400));
                         } catch (InterruptedException e) {
-
+                            //  Eh.
                         }
 
                         if (file.getRefrainFromStartingPropagation())
                             return;
 
                         for (int i = 0; i < file.getNumberOfChunks(); i++) {
-                            System.out.print("Backing up chunk " + (i + 1) + "/" + file.getNumberOfChunks() + "...");    //  Peasants start counting at 1...
-
                             file.resetPeerList();
 
                             ChunkBackupMessage m = new ChunkBackupMessage(Globals.AppVersion,
@@ -227,7 +226,7 @@ public class MessageReceiver extends Observable {
                                     file.getChunk(i));
 
                             for (int tries = 0;
-                                 file.getPeerCount() < file.getReplicationCountForChunk(i) && tries < Globals.MaxTriesPerChunk;
+                                 file.getPeerCount() < file.getDesiredReplicationCount() && tries < Globals.MaxTriesPerChunk;
                                  tries++) {
                                 pc.getMDBSocket().sendRaw(m.getMessageData());
 
